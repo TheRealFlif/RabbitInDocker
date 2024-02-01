@@ -1,21 +1,29 @@
 ﻿using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System.Text;
 
-namespace Producer;
+namespace Consumer;
 
-public class Producer : IDisposable
+public class Consumer : IDisposable
 {
     ConnectionFactory _factory;
     IConnection _connection;
     IModel _channel;
+    EventingBasicConsumer _consumer;
 
-    public Producer()
+    public Consumer()
     {
+        _factory = new ConnectionFactory { HostName = "localhost" };
+
         try
         {
-            _factory = new ConnectionFactory { HostName = "localhost" };
             _connection = _factory.CreateConnection();
             _channel = _connection.CreateModel();
             _channel.QueueDeclare("letterbox", true, false, false, null);
+
+            _consumer = new EventingBasicConsumer(_channel);
+            _consumer.Received += Consumer_Received;
+            _channel.BasicConsume("letterbox", true, _consumer);
         }
         catch (Exception ex)
         {
@@ -23,10 +31,12 @@ public class Producer : IDisposable
         }
     }
 
-    public void SendMessage(string message)
+    private int messageCount;
+    private void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)
     {
-        var body = System.Text.Encoding.UTF8.GetBytes(message);
-        _channel.BasicPublish("", "letterbox", null, body);
+        var body = basicDeliverEventArgs.Body.ToArray();
+        var message = Encoding.UTF8.GetString(body);
+        Console.WriteLine($"Message #{++messageCount:000}: {message}");
     }
 
     public void Dispose()

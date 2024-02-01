@@ -6,7 +6,7 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        var producer = new Producer.Producer();
+        using var producer = new Producer.Producer();
         var running = true;
         while(running)
         {
