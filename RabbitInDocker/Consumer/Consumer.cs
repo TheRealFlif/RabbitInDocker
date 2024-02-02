@@ -35,10 +35,23 @@ public class Consumer : IDisposable
     private int messageCount;
     private void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)
     {
+        var deliveryTag = basicDeliverEventArgs.DeliveryTag;
+        
         var body = basicDeliverEventArgs.Body.ToArray();
         var message = Encoding.UTF8.GetString(body);
-        Console.WriteLine($"Message #{++messageCount:000}: {message}");
-        _channel.BasicAck(basicDeliverEventArgs.DeliveryTag, false);
+        
+        if (message.StartsWith("t"))
+        {
+            Console.WriteLine($"Handling message #{++messageCount:000}: {message}");
+            _channel.BasicAck(deliveryTag, false);
+        }
+        else
+        {
+            Console.WriteLine($"Unable to handle message #{++messageCount:000}: {message}");
+            var requeue = !basicDeliverEventArgs.Redelivered;
+            requeue = true;
+            _channel.BasicNack(deliveryTag, false, requeue);
+        }
     }
 
     public void Dispose()
