@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ProductionProgram; // Note: actual namespace depends on the project name.
+﻿namespace ProductionProgram;
 
 internal class Program
 {

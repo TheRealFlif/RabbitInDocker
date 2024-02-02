@@ -1,14 +1,18 @@
-﻿namespace ConsumerProgram
+﻿using Consumer;
+
+namespace ConsumerProgram
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            using var consumer = new Consumer.Consumer();
+            var factory = new ConsumerFactory();
+            using var consumer = factory.Create("letterbox");
             var running = true;
+            
             while (running)
             {
-                //
+
             }
         }
     }

@@ -4,27 +4,19 @@ using System.Text;
 
 namespace Consumer;
 
-public class Consumer : IDisposable
+public class DefaultConsumer : IConsumer
 {
-    ConnectionFactory _factory;
-    IConnection _connection;
     IModel _channel;
     EventingBasicConsumer _consumer;
 
-    public Consumer()
+    public DefaultConsumer(IModel channel)
     {
-        _factory = new ConnectionFactory { HostName = "localhost" };
-
         try
         {
-            _connection = _factory.CreateConnection();
-            _channel = _connection.CreateModel();
-            _channel.QueueDeclare("letterbox", true, false, false, null);
-
+            _channel = channel;
             _consumer = new EventingBasicConsumer(_channel);
-
             _consumer.Received += Consumer_Received;
-            _channel.BasicConsume("letterbox", false, _consumer);
+            _channel.BasicConsume(_channel.CurrentQueue, false, _consumer);
         }
         catch (Exception ex)
         {
@@ -49,7 +41,7 @@ public class Consumer : IDisposable
         {
             Console.WriteLine($"Unable to handle message #{++messageCount:000}: {message}");
             var requeue = !basicDeliverEventArgs.Redelivered;
-            requeue = true;
+            //requeue = true;
             _channel.BasicNack(deliveryTag, false, requeue);
         }
     }
@@ -63,15 +55,6 @@ public class Consumer : IDisposable
         finally
         {
             _channel?.Dispose();
-        }
-
-        try
-        {
-            _connection?.Close();
-        }
-        finally
-        {
-            _connection?.Dispose();
         }
     }
 }
