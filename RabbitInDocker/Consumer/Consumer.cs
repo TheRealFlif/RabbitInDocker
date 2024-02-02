@@ -22,8 +22,9 @@ public class Consumer : IDisposable
             _channel.QueueDeclare("letterbox", true, false, false, null);
 
             _consumer = new EventingBasicConsumer(_channel);
+
             _consumer.Received += Consumer_Received;
-            _channel.BasicConsume("letterbox", true, _consumer);
+            _channel.BasicConsume("letterbox", false, _consumer);
         }
         catch (Exception ex)
         {
@@ -37,6 +38,7 @@ public class Consumer : IDisposable
         var body = basicDeliverEventArgs.Body.ToArray();
         var message = Encoding.UTF8.GetString(body);
         Console.WriteLine($"Message #{++messageCount:000}: {message}");
+        _channel.BasicAck(basicDeliverEventArgs.DeliveryTag, false);
     }
 
     public void Dispose()
