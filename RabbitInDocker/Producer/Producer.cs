@@ -8,6 +8,9 @@ public class Producer : IDisposable
     IConnection _connection;
     IModel _channel;
 
+    /// <summary>
+    /// Creates a producer that sends a message to a channel named "letterbox"
+    /// </summary>
     public Producer()
     {
         try
@@ -23,6 +26,10 @@ public class Producer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Sends the message with a routing key = "letterbox"
+    /// </summary>
+    /// <param name="message">Message to send</param>
     public void SendMessage(string message)
     {
         var body = System.Text.Encoding.UTF8.GetBytes(message);

@@ -10,10 +10,12 @@ internal class Program
         {
             Console.WriteLine("Enter message (Q = quit):");
             var message = Console.ReadLine();
-            if (message == "q")
-                break;
-            
             producer.SendMessage(message);
+
+            if (message == "q")
+            {
+                break;
+            }
         }
     }
 }

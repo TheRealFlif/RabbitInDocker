@@ -32,6 +32,13 @@ public class DefaultConsumer : IConsumer
         var body = basicDeliverEventArgs.Body.ToArray();
         var message = Encoding.UTF8.GetString(body);
         
+        if(message.StartsWith("q"))
+        {
+            Console.WriteLine($"Handling message #{++messageCount:000}: {message}");
+            _channel.BasicAck(deliveryTag, false); //Om vi inte ackar meddeleandet så ligger den kvar på kön och stänger ner konsument-programmet
+            ExitMessageReceived.Invoke(this, new EventArgs());    
+        }
+
         if (message.StartsWith("t"))
         {
             Console.WriteLine($"Handling message #{++messageCount:000}: {message}");
@@ -41,10 +48,11 @@ public class DefaultConsumer : IConsumer
         {
             Console.WriteLine($"Unable to handle message #{++messageCount:000}: {message}");
             var requeue = !basicDeliverEventArgs.Redelivered;
-            //requeue = true;
             _channel.BasicNack(deliveryTag, false, requeue);
         }
     }
+    public event EventHandler ExitMessageReceived;
+    
 
     public void Dispose()
     {
