@@ -1,20 +1,27 @@
-﻿using RabbitMQ.Client;
+﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Data.Common;
 using System.Text;
 
 namespace Consumer;
 
 public class DefaultConsumer : IConsumer
 {
-    IModel _channel;
-    EventingBasicConsumer _consumer;
+    readonly IModel _channel;
+    readonly EventingBasicConsumer _consumer;
+    private int messageCount;
+    readonly string _name;
+    public event EventHandler ExitMessageReceived;
 
     public DefaultConsumer(IModel channel)
     {
+        _channel = channel;
+        
         try
         {
-            _channel = channel;
             _consumer = new EventingBasicConsumer(_channel);
+            _name = _consumer.ConsumerTags.FirstOrDefault(string.Empty);
             _consumer.Received += Consumer_Received;
             _channel.BasicConsume(_channel.CurrentQueue, false, _consumer);
         }
@@ -24,7 +31,12 @@ public class DefaultConsumer : IConsumer
         }
     }
 
-    private int messageCount;
+    public DefaultConsumer(IModel channel, string name) : this(channel)
+    {
+        _name = name;
+    }
+
+    
     private void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)
     {
         var deliveryTag = basicDeliverEventArgs.DeliveryTag;
@@ -32,37 +44,44 @@ public class DefaultConsumer : IConsumer
         var body = basicDeliverEventArgs.Body.ToArray();
         var message = Encoding.UTF8.GetString(body);
         
-        if(message.StartsWith("q"))
+        if(message.StartsWith('q'))
         {
-            Console.WriteLine($"Handling message #{++messageCount:000}: {message}");
+            Console.WriteLine($"{_name} (#{++messageCount:000}): handling {message}");
             _channel.BasicAck(deliveryTag, false); //Om vi inte ackar meddeleandet så ligger den kvar på kön och stänger ner konsument-programmet
-            ExitMessageReceived.Invoke(this, new EventArgs());    
+            ExitMessageReceived?.Invoke(this, new EventArgs());    
         }
 
-        if (message.StartsWith("t"))
+        if (message.StartsWith('t'))
         {
-            Console.WriteLine($"Handling message #{++messageCount:000}: {message}");
+            Console.WriteLine($"{_name} (#{++messageCount:000}): handling {message}");
             _channel.BasicAck(deliveryTag, false);
         }
         else
         {
-            Console.WriteLine($"Unable to handle message #{++messageCount:000}: {message}");
+            Console.WriteLine($"{_name} (#{++messageCount:000}): unable handling {message}");
             var requeue = !basicDeliverEventArgs.Redelivered;
             _channel.BasicNack(deliveryTag, false, requeue);
         }
     }
-    public event EventHandler ExitMessageReceived;
     
-
     public void Dispose()
     {
-        try
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
         {
-            _channel?.Close();
-        }
-        finally
-        {
-            _channel?.Dispose();
+            try
+            {
+                _channel?.Close();
+            }
+            finally
+            {
+                _channel?.Dispose();
+            }
         }
     }
 }

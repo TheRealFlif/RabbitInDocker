@@ -4,7 +4,8 @@ namespace Consumer;
 
 public class ConsumerFactory : IConsumerFactory
 {
-    ConnectionFactory _factory;
+    readonly ConnectionFactory _factory;
+    readonly Dictionary<string, int> _consumerCounter = [];
 
     public ConsumerFactory()
     {
@@ -17,6 +18,13 @@ public class ConsumerFactory : IConsumerFactory
         var channel = connection.CreateModel();
         channel.QueueDeclare(queueName, true, false, false, null);
 
-        return new DefaultConsumer(channel);
+        if(_consumerCounter.TryGetValue(queueName, out var counter))
+        {
+            _consumerCounter.Remove(queueName);
+        }
+        _consumerCounter.Add(queueName, ++counter);
+        
+        var returnValue = new DefaultConsumer(channel, $"{queueName}_{counter}");
+        return returnValue;
     }
 }

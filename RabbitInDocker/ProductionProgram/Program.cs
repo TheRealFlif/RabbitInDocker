@@ -12,7 +12,7 @@ internal class Program
             var message = Console.ReadLine();
             producer.SendMessage(message);
 
-            if (message == "q")
+            if (message?.StartsWith('q')??false)
             {
                 break;
             }
