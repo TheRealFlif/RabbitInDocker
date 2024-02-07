@@ -1,5 +1,6 @@
 ﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 using RabbitMQ.Client;
+using System.Text.Json;
 
 namespace Producer;
 
@@ -55,9 +56,16 @@ public class AutomaticProducer : IDisposable
     {
         for(int i=0; i<numberOfMessages; i++)
         {
-            var message = Guid.NewGuid().ToString("N");
+            var data = Guid.NewGuid().ToString("N");
+            var messageObject = new Envelope<string>(data);
+            messageObject["sender"] = _name;
+            messageObject["messageNumber"] = $"{i + 1:00}";
+
+
+            var message = JsonSerializer.Serialize(messageObject);
             var body = System.Text.Encoding.UTF8.GetBytes(message ?? string.Empty);
-            Console.WriteLine($"{_name} sending message: {message}");
+
+            Console.WriteLine($"{_name} sending message: {data}");
             _channel.BasicPublish("", "letterbox", null, body);
 
             var sleepInMillisec = _random.Next(_minWait, _maxWait);
@@ -68,7 +76,8 @@ public class AutomaticProducer : IDisposable
 
     public void ShutDown()
     {
-        _channel.BasicPublish("", "letterbox", null, System.Text.Encoding.UTF8.GetBytes("q"));
+        var shutDownMessage = new Envelope<string>("q");
+        _channel.BasicPublish("", "letterbox", null, System.Text.Encoding.UTF8.GetBytes(shutDownMessage.To()));
     }
 
     public void Dispose()

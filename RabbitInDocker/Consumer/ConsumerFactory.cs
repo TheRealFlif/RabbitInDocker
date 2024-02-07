@@ -24,7 +24,7 @@ public class ConsumerFactory : IConsumerFactory
         }
         _consumerCounter.Add(queueName, ++counter);
         
-        var returnValue = new DefaultConsumer(channel, $"{queueName}_{counter}");
+        var returnValue = new MessageConsumer(channel, $"{queueName}_{counter}");
         return returnValue;
     }
 }

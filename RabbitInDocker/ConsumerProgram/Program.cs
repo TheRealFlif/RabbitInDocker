@@ -20,6 +20,11 @@ internal class Program
             {
                 defaultConsumer.ExitMessageReceived += ExitMessageReceived;
             }
+
+            if (consumer is MessageConsumer messageConsumer)
+            {
+                messageConsumer.ExitMessageReceived += ExitMessageReceived;
+            }
         }
 
         var running = true;
