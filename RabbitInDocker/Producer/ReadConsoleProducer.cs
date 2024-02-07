@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 
 namespace Producer;
 
-public class Producer : IDisposable
+public class ReadConsoleProducer : IDisposable
 {
     readonly ConnectionFactory _factory;
     readonly IConnection _connection;
@@ -12,7 +12,7 @@ public class Producer : IDisposable
     /// <summary>
     /// Creates a producer that sends a message to a channel named "letterbox"
     /// </summary>
-    public Producer()
+    public ReadConsoleProducer()
     {
         try
         {
