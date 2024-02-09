@@ -20,10 +20,12 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
-            
+
+    - name: check dir
+      run: ls -a
+    
     - name: Restore dependencies
-      working-directory: ~/home/runner/work/RabbitInDocker/RabbitInDocker
-      run: dotnet restore ~/home/runner/work/RabbitInDocker/RabbitInDocker/RabbitInDocker.sln
+      run: dotnet restore /home/runner/work/RabbitInDocker/RabbitInDocker/RabbitInDocker.sln
 
     - name: check dir
       run: ls -a
