@@ -1,9 +1,10 @@
 ﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+using Consumer.Entities;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 
-namespace Consumer;
+namespace Consumer.Consumers;
 
 public class MessageConsumer : IConsumer
 {
@@ -40,9 +41,9 @@ public class MessageConsumer : IConsumer
     {
         var deliveryTag = basicDeliverEventArgs.DeliveryTag;
 
-        var body = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray()); 
+        var body = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray());
         var message = GetMessage(_name, ++messageCount, body);
-        
+
         Console.WriteLine(message);
         _channel.BasicAck(deliveryTag, false);
 
@@ -52,14 +53,14 @@ public class MessageConsumer : IConsumer
         }
     }
 
-    private static object  _lock = new();
+    private static object _lock = new();
     private static string GetMessage(string name, int localCount, string message)
     {
         Envelope<string>? messageObject;
         try
         {
-             messageObject = Envelope<string>.From<string>(message);
-            if(messageObject.Data.StartsWith('q'))
+            messageObject = Envelope<string>.From<string>(message);
+            if (messageObject.Data.StartsWith('q'))
             {
                 return "q";
             }

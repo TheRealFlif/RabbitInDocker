@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using Consumer.Consumers;
+using RabbitMQ.Client;
 
 namespace Consumer;
 

@@ -1,4 +1,6 @@
-﻿namespace Consumer
+﻿using Consumer.Consumers;
+
+namespace Consumer
 {
     public interface IConsumerFactory
     {

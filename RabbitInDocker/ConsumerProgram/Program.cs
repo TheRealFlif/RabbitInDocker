@@ -1,4 +1,5 @@
 ﻿using Consumer;
+using Consumer.Consumers;
 
 namespace ConsumerProgram;
 

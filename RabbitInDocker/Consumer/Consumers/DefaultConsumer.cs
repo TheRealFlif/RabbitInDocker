@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 
-namespace Consumer;
+namespace Consumer.Consumers;
 
 public class DefaultConsumer : IConsumer
 {
@@ -52,7 +52,7 @@ public class DefaultConsumer : IConsumer
         }
     }
 
-    private static object  _lock = new();
+    private static object _lock = new();
     private static string GetMessage(string name, int localCount, string message)
     {
         lock (_lock)
