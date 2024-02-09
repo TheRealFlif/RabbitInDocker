@@ -1,7 +1,7 @@
 ﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 using RabbitMQ.Client;
 
-namespace Producer;
+namespace Producer.Producers;
 
 public class ReadConsoleProducer : IDisposable
 {
@@ -33,7 +33,7 @@ public class ReadConsoleProducer : IDisposable
     /// <param name="message">Message to send</param>
     public void SendMessage(string? message)
     {
-        var body = System.Text.Encoding.UTF8.GetBytes(message??string.Empty);
+        var body = System.Text.Encoding.UTF8.GetBytes(message ?? string.Empty);
         _channel.BasicPublish("", "letterbox", null, body);
     }
 

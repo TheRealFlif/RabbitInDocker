@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 
-namespace Producer;
+namespace Producer.Entities;
 
-public  class Envelope<T>
+public class Envelope<T>
 {
     public Envelope(T data)
     {

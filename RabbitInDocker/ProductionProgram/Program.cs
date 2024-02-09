@@ -4,9 +4,9 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        var producer = new Producer.AutomaticProducer(100, 1000, "letterbox", "#1");
-        var producer1 = new Producer.AutomaticProducer(100, 1000, "letterbox", "#2");
-        var producer2 = new Producer.AutomaticProducer(100, 1000, "letterbox", "#3");
+        var producer = new Producer.Producers.AutomaticProducer(100, 1000, "letterbox", "#1");
+        var producer1 = new Producer.Producers.AutomaticProducer(100, 1000, "letterbox", "#2");
+        var producer2 = new Producer.Producers.AutomaticProducer(100, 1000, "letterbox", "#3");
         
         Console.WriteLine("Sending ten messages");
         var t = Task.Run(() => { producer.SendMessages(10); });

@@ -2,7 +2,7 @@
 using RabbitMQ.Client;
 using System.Text.Json;
 
-namespace Producer;
+namespace Producer.Producers;
 
 /// <summary>
 /// Creates messages automtically with a randomized interval
@@ -26,8 +26,8 @@ public class AutomaticProducer : IDisposable
     /// </summary>
     public AutomaticProducer(int minWait, int maxWait, string queueName, string name)
     {
-        _minWait = minWait<maxWait?minWait:maxWait;
-        _maxWait = maxWait>minWait?maxWait:minWait;
+        _minWait = minWait < maxWait ? minWait : maxWait;
+        _maxWait = maxWait > minWait ? maxWait : minWait;
         _name = name;
 
         try
@@ -43,21 +43,17 @@ public class AutomaticProducer : IDisposable
         }
     }
 
-
-
-
     static readonly Random _random = new();
-
     /// <summary>
     /// Sends the message with a routing key = "letterbox"
     /// </summary>
     /// <param name="message">Message to send</param>
     public void SendMessages(int numberOfMessages)
     {
-        for(int i=0; i<numberOfMessages; i++)
+        for (int i = 0; i < numberOfMessages; i++)
         {
             var data = Guid.NewGuid().ToString("N");
-            var messageObject = new Envelope<string>(data);
+            var messageObject = new Entities.Envelope<string>(data);
             messageObject["sender"] = _name;
             messageObject["messageNumber"] = $"{i + 1:00}";
 
@@ -76,7 +72,7 @@ public class AutomaticProducer : IDisposable
 
     public void ShutDown()
     {
-        var shutDownMessage = new Envelope<string>("q");
+        var shutDownMessage = new Entities.Envelope<string>("q");
         _channel.BasicPublish("", "letterbox", null, System.Text.Encoding.UTF8.GetBytes(shutDownMessage.To()));
     }
 
