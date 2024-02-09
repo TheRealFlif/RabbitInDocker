@@ -25,7 +25,7 @@ jobs:
       run: ls -a
     
     - name: Restore dependencies
-      run: dotnet restore /home/runner/work/RabbitInDocker/RabbitInDocker/RabbitInDocker.sln
+      run: dotnet restore ./RabbitInDocker/RabbitInDocker.sln
 
     - name: check dir
       run: ls -a
