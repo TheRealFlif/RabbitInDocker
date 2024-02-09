@@ -13,19 +13,25 @@ public class Envelope<T>
     public Dictionary<string, string> MetaData { get; set; }
     public T Data { get; set; }
 
-    public string this[string key]
+    public string? this[string key]
     {
-        get { return MetaData.TryGetValue(key, out string returnValue) ? returnValue : null; }
-        set { MetaData[key] = value; }
+        get => MetaData.TryGetValue(key, out var returnValue) ? returnValue : null;
+        set
+        {
+            if (value != null)
+            {
+                MetaData[key] = value;
+            }
+        }
     }
-
+   
     public string To()
     {
         return JsonSerializer.Serialize(this);
     }
 
-    public static Envelope<T> From<T>(string json)
+    public static Envelope<T>? From(string json)
     {
-        return JsonSerializer.Deserialize<Envelope<T>>(json);
+        return JsonSerializer.Deserialize<Envelope<T>>(json) ?? default;
     }
 }

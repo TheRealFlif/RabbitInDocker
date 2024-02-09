@@ -15,6 +15,15 @@ internal class Program
         Console.WriteLine("Another ten more ");
         var t2 = Task.Run(() => { producer2.SendMessages(10); });
         Task.WaitAll([t, t1, t2]);
+        Console.WriteLine("All messages sent");
+        Console.WriteLine("Write next messages to send (q to exit)");
+        var readValue = Console.ReadLine();
+        while(readValue != "q")
+        {
+            producer.SendMessages(readValue?.Length??0);
+            readValue = Console.ReadLine();
+        }
+
         Console.WriteLine("Shutting down");
         producer.ShutDown();
         Console.ReadLine();

@@ -17,14 +17,9 @@ internal class Program
 
         foreach (var consumer in _consumers)
         {
-            if (consumer is DefaultConsumer defaultConsumer)
+            if (consumer is IConsumer iConsumer)
             {
-                defaultConsumer.ExitMessageReceived += ExitMessageReceived;
-            }
-
-            if (consumer is MessageConsumer messageConsumer)
-            {
-                messageConsumer.ExitMessageReceived += ExitMessageReceived;
+                iConsumer.ExitMessageReceived += ExitMessageReceived;
             }
         }
 

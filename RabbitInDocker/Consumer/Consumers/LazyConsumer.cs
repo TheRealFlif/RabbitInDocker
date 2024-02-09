@@ -1,29 +1,39 @@
-﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-using Consumer.Entities;
-using RabbitMQ.Client;
+﻿using Consumer.Entities;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client;
 using System.Text;
+using System.ComponentModel.DataAnnotations;
 
 namespace Consumer.Consumers;
 
-public class MessageConsumer : IConsumer
+public class LazyConsumer : IConsumer
 {
     readonly IModel _channel;
-    readonly EventingBasicConsumer _consumer;
+    readonly EventingBasicConsumer? _consumer;
     private static int _totalMessageCount;
     private int messageCount;
     readonly string _name;
-    
-    public event EventHandler ExitMessageReceived;
+    public event EventHandler? ExitMessageReceived;
 
-    public MessageConsumer(IModel channel)
+    private int _minWait;
+    private int _maxWait;
+
+    public LazyConsumer(IModel channel, string name) : this(channel, name, 100, 100)
     {
+
+    }
+
+    public LazyConsumer(IModel channel, string name, int minWait, int maxWait)
+    {
+        _minWait = minWait < maxWait ? minWait : maxWait;
+        _maxWait = maxWait > minWait ? maxWait : minWait;
+        _name = name;
         _channel = channel;
 
         try
         {
             _consumer = new EventingBasicConsumer(_channel);
-            _name = _consumer.ConsumerTags.FirstOrDefault(string.Empty);
+            _name = _name ?? _consumer.ConsumerTags.FirstOrDefault(string.Empty);
             _consumer.Received += Consumer_Received;
             _channel.BasicConsume(_channel.CurrentQueue, false, _consumer);
         }
@@ -33,18 +43,20 @@ public class MessageConsumer : IConsumer
         }
     }
 
-    public MessageConsumer(IModel channel, string name) : this(channel)
-    {
-        _name = name;
-    }
+
+
+    private static Random _random = new Random();
 
     private void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)
     {
+        var workTime = _random.Next(_minWait, _maxWait);
+        Console.WriteLine($"{_name} received message and working for {workTime} ms.");
         var deliveryTag = basicDeliverEventArgs.DeliveryTag;
 
         var body = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray());
         var message = GetMessage(_name, ++messageCount, body);
 
+        Thread.Sleep(workTime);
         Console.WriteLine(message);
         _channel.BasicAck(deliveryTag, false);
 
@@ -71,7 +83,6 @@ public class MessageConsumer : IConsumer
         {
             return e.Message;
         }
-
         if (messageObject != null)
         {
             lock (_lock)
@@ -79,7 +90,8 @@ public class MessageConsumer : IConsumer
                 _totalMessageCount++;
                 var sender = messageObject["sender"];
                 var messageNumber = messageObject["messageNumber"];
-                returnValue = $"{name} (#{localCount:00} of {_totalMessageCount:00}): handling {messageObject.Data} from {sender} no: {messageNumber}";
+
+                return $"{name} (#{localCount:00} of {_totalMessageCount:00}): handling {messageObject.Data} from {sender} no: {messageNumber}";
             }
         }
 
