@@ -7,7 +7,7 @@ namespace Producer.Producers;
 /// <summary>
 /// Creates messages automtically with a randomized interval
 /// </summary>
-public class AutomaticProducer : IDisposable
+public class AutomaticProducer : Entities.IProducer
 {
     readonly ConnectionFactory _factory;
     readonly IConnection _connection;
@@ -15,8 +15,9 @@ public class AutomaticProducer : IDisposable
     readonly int _minWait;
     readonly int _maxWait;
     readonly string _name;
+    readonly string _routingKey;
 
-    public AutomaticProducer(int minWait, int maxWait, string queueName) : this(minWait, maxWait, queueName, $"{queueName}_{Guid.NewGuid():N}")
+    public AutomaticProducer(int minWait, int maxWait, string routingKey) : this(minWait, maxWait, routingKey, $"{routingKey}_{Guid.NewGuid():N}")
     {
 
     }
@@ -24,18 +25,19 @@ public class AutomaticProducer : IDisposable
     /// <summary>
     /// Creates a producer that sends a message between minWait and maxWait milliseconds to a queue 
     /// </summary>
-    public AutomaticProducer(int minWait, int maxWait, string queueName, string name)
+    public AutomaticProducer(int minWait, int maxWait, string routingKey, string name)
     {
         _minWait = minWait < maxWait ? minWait : maxWait;
         _maxWait = maxWait > minWait ? maxWait : minWait;
         _name = name;
+        _routingKey = routingKey;
 
         try
         {
             _factory = new ConnectionFactory { HostName = "localhost" };
             _connection = _factory.CreateConnection();
             _channel = _connection.CreateModel();
-            _channel.QueueDeclare(queueName, true, false, false, null);
+            _channel.QueueDeclare(routingKey, true, false, false, null);
         }
         catch (Exception ex)
         {
@@ -45,7 +47,7 @@ public class AutomaticProducer : IDisposable
 
     static readonly Random _random = new();
     /// <summary>
-    /// Sends the message with a routing key = "letterbox"
+    /// Sends the message with a routing key
     /// </summary>
     /// <param name="message">Message to send</param>
     public void SendMessages(int numberOfMessages)
@@ -62,7 +64,7 @@ public class AutomaticProducer : IDisposable
             var body = System.Text.Encoding.UTF8.GetBytes(message ?? string.Empty);
 
             Console.WriteLine($"{_name} sending message: {data}");
-            _channel.BasicPublish("", "letterbox", null, body);
+            _channel.BasicPublish("", _routingKey, null, body);
 
             var sleepInMillisec = _random.Next(_minWait, _maxWait);
             Console.WriteLine($"{_name} sleeping {sleepInMillisec} milliseconds");
@@ -73,7 +75,7 @@ public class AutomaticProducer : IDisposable
     public void ShutDown()
     {
         var shutDownMessage = new Entities.Envelope<string>("q");
-        _channel.BasicPublish("", "letterbox", null, System.Text.Encoding.UTF8.GetBytes(shutDownMessage.To()));
+        _channel.BasicPublish("", _routingKey, null, System.Text.Encoding.UTF8.GetBytes(shutDownMessage.To()));
     }
 
     public void Dispose()

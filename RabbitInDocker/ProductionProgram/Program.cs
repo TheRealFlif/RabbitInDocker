@@ -1,31 +1,40 @@
 ﻿namespace ProductionProgram;
 
+using Producer;
+using Producer.Entities;
+using Producer.Producers;
+
 internal class Program
 {
     static void Main(string[] args)
     {
-        var producer = new Producer.Producers.AutomaticProducer(100, 1000, "letterbox", "#1");
-        var producer1 = new Producer.Producers.AutomaticProducer(100, 1000, "letterbox", "#2");
-        var producer2 = new Producer.Producers.AutomaticProducer(100, 1000, "letterbox", "#3");
+        var factory = new ProducerFactory();
+
+        var producers = new[] { 1, 2, 3 }
+            .Select(i => new ProducerSettings(100, 1000, "letterbox", $"#{i}"))
+            .Select(factory.Create)
+            .Select(p => p as AutomaticProducer);
+
+        var tasks = producers
+            .Select(ap => Task.Run(() => ap?.SendMessages(10)))
+            .ToArray();
         
-        Console.WriteLine("Sending ten messages");
-        var t = Task.Run(() => { producer.SendMessages(10); });
-        Console.WriteLine("Ten more");
-        var t1 = Task.Run(() => { producer1.SendMessages(10); });
-        Console.WriteLine("Another ten more ");
-        var t2 = Task.Run(() => { producer2.SendMessages(10); });
-        Task.WaitAll([t, t1, t2]);
+        Task.WaitAll(tasks);
+
         Console.WriteLine("All messages sent");
         Console.WriteLine("Write next messages to send (q to exit)");
         var readValue = Console.ReadLine();
         while(readValue != "q")
         {
-            producer.SendMessages(readValue?.Length??0);
+            tasks = producers
+            .Select(ap => Task.Run(() => ap?.SendMessages(readValue?.Length ?? 0)))
+            .ToArray();
+
             readValue = Console.ReadLine();
         }
 
         Console.WriteLine("Shutting down");
-        producer.ShutDown();
+        producers?.First()?.ShutDown();
         Console.ReadLine();
     }
 }

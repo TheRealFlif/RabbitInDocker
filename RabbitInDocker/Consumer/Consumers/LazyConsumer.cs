@@ -43,8 +43,6 @@ public class LazyConsumer : IConsumer
         }
     }
 
-
-
     private static Random _random = new Random();
 
     private void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)

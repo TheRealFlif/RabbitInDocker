@@ -29,10 +29,6 @@ internal class Program
 
     private static void ExitMessageReceived(object? sender, EventArgs e)
     {
-        foreach (var consumer in _consumers)
-        {
-            consumer?.Dispose();
-        }
         Environment.Exit(0);
     }
 }

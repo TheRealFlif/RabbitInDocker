@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 
 namespace Producer.Producers;
 
-public class ReadConsoleProducer : IDisposable
+public class ReadConsoleProducer : Entities.IProducer
 {
     readonly ConnectionFactory _factory;
     readonly IConnection _connection;
