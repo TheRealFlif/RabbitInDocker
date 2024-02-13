@@ -31,7 +31,9 @@ public class ConsumerFactory : IConsumerFactory
         var connection = _factory.CreateConnection();
         var channel = connection.CreateModel();
         channel.QueueDeclare(queueName, true, false, false, null);
-
+        var prefetchSize = 0u; // the size of message buffer in bytes that the client can use to prefetch messages, 0 = no limit
+        ushort prefetchCount = 1; // the number of messages to retrieve before stop sending new messages to the channel
+        channel.BasicQos(prefetchSize, prefetchCount, false); //false = setttings apply only to this channel and consumers on the channel
         var returnValue = new LazyConsumer(channel, consumerName, _minSleep, _maxSleep);
         return returnValue;
     }

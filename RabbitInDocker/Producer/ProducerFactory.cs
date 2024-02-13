@@ -7,6 +7,6 @@ public class ProducerFactory
 {
     public IProducer Create(ProducerSettings settings)
     {
-        return new AutomaticProducer(settings.MinWait, settings.MaxWait, settings.RoutingKey, settings.Name);
+        return new AutomaticProducer(settings);
     }
 }

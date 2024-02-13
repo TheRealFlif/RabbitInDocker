@@ -1,5 +1,5 @@
 ﻿namespace Producer.Entities;
 
-public interface IProducer : IDisposable
+public interface IProducer
 {
 }

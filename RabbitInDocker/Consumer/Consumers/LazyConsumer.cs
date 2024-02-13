@@ -57,15 +57,10 @@ public class LazyConsumer : IConsumer
         Thread.Sleep(workTime);
         Console.WriteLine(message);
         _channel.BasicAck(deliveryTag, false);
-
-        if (message.StartsWith('q'))
-        {
-            ExitMessageReceived?.Invoke(this, new EventArgs());
-        }
     }
 
     private static object _lock = new();
-    private static string GetMessage(string name, int localCount, string message)
+    private string GetMessage(string name, int localCount, string message)
     {
         var returnValue = string.Empty;
         Envelope<string>? messageObject;
@@ -74,7 +69,7 @@ public class LazyConsumer : IConsumer
             messageObject = Envelope<string>.From(message);
             if ((messageObject?.Data.StartsWith('q')).GetValueOrDefault())
             {
-                returnValue = "q";
+                ExitMessageReceived?.Invoke(this, new EventArgs());
             }
         }
         catch (Exception e)
@@ -93,7 +88,7 @@ public class LazyConsumer : IConsumer
             }
         }
 
-        return returnValue;
+        return string.Empty;
     }
 
     public void Dispose()

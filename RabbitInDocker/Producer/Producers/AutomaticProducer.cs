@@ -1,4 +1,5 @@
 ﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+using Producer.Entities;
 using RabbitMQ.Client;
 using System.Text.Json;
 
@@ -7,104 +8,73 @@ namespace Producer.Producers;
 /// <summary>
 /// Creates messages automtically with a randomized interval
 /// </summary>
-public class AutomaticProducer : Entities.IProducer
+public class AutomaticProducer : IProducer
 {
-    readonly ConnectionFactory _factory;
-    readonly IConnection _connection;
-    readonly IModel _channel;
-    readonly int _minWait;
-    readonly int _maxWait;
-    readonly string _name;
-    readonly string _routingKey;
+    readonly ProducerSettings _producerSettings;
 
-    public AutomaticProducer(int minWait, int maxWait, string routingKey) : this(minWait, maxWait, routingKey, $"{routingKey}_{Guid.NewGuid():N}")
+    public AutomaticProducer(ProducerSettings producerSettings)
     {
-
+        _producerSettings = producerSettings;
     }
 
-    /// <summary>
-    /// Creates a producer that sends a message between minWait and maxWait milliseconds to a queue 
-    /// </summary>
-    public AutomaticProducer(int minWait, int maxWait, string routingKey, string name)
-    {
-        _minWait = minWait < maxWait ? minWait : maxWait;
-        _maxWait = maxWait > minWait ? maxWait : minWait;
-        _name = name;
-        _routingKey = routingKey;
-
-        try
-        {
-            _factory = new ConnectionFactory { HostName = "localhost" };
-            _connection = _factory.CreateConnection();
-            _channel = _connection.CreateModel();
-            _channel.QueueDeclare(routingKey, true, false, false, null);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ooops: {ex.Message}");
-        }
-    }
-
-    static readonly Random _random = new();
     /// <summary>
     /// Sends the message with a routing key
     /// </summary>
     /// <param name="message">Message to send</param>
     public void SendMessages(int numberOfMessages)
     {
+        using var channel = CreateChannel();
         for (int i = 0; i < numberOfMessages; i++)
         {
-            var data = Guid.NewGuid().ToString("N");
-            var messageObject = new Entities.Envelope<string>(data);
-            messageObject["sender"] = _name;
-            messageObject["messageNumber"] = $"{i + 1:00}";
-
-
+            var messageObject = CreateNewMessage(Guid.NewGuid().ToString("N"));
             var message = JsonSerializer.Serialize(messageObject);
             var body = System.Text.Encoding.UTF8.GetBytes(message ?? string.Empty);
 
-            Console.WriteLine($"{_name} sending message: {data}");
-            _channel.BasicPublish("", _routingKey, null, body);
-
-            var sleepInMillisec = _random.Next(_minWait, _maxWait);
-            Console.WriteLine($"{_name} sleeping {sleepInMillisec} milliseconds");
-            Thread.Sleep(sleepInMillisec);
+            Console.WriteLine($"{_producerSettings.Name} sending message: {messageObject.Data}");
+            channel.BasicPublish("", _producerSettings.RoutingKey, null, body);
+            Sleep();
         }
+    }
+
+    private IModel? CreateChannel()
+    {
+        IModel? returnValue = null;
+        try
+        {
+            var factory = new ConnectionFactory { HostName = "localhost" };
+            var connection = factory.CreateConnection();
+            returnValue = connection.CreateModel();
+            returnValue.QueueDeclare(_producerSettings.RoutingKey, true, false, false, null);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ooops: {ex.Message}");
+        }
+
+        return returnValue;
+    }
+
+    int _messageNumber = 0;
+    private Envelope<string> CreateNewMessage(string body)
+    {
+        var returnValue = new Envelope<string>(body);
+        returnValue["sender"] = _producerSettings.Name;
+        returnValue["messageNumber"] = $"{++_messageNumber:00}";
+        return returnValue;
+    }
+
+    static readonly Random _random = new();
+    private void Sleep()
+    {
+        var sleepInMillisec = _random.Next(_producerSettings.MinWait, _producerSettings.MaxWait);
+        Console.WriteLine($"{_producerSettings.Name} sleeping {sleepInMillisec} milliseconds");
+        Thread.Sleep(sleepInMillisec);
     }
 
     public void ShutDown()
     {
-        var shutDownMessage = new Entities.Envelope<string>("q");
-        _channel.BasicPublish("", _routingKey, null, System.Text.Encoding.UTF8.GetBytes(shutDownMessage.To()));
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            try
-            {
-                _channel?.Close();
-            }
-            finally
-            {
-                _channel?.Dispose();
-            }
-
-            try
-            {
-                _connection?.Close();
-            }
-            finally
-            {
-                _connection?.Dispose();
-            }
-        }
+        using var channel = CreateChannel();
+        var shutDownMessage = CreateNewMessage("q");
+        channel.BasicPublish("", _producerSettings.RoutingKey, null, System.Text.Encoding.UTF8.GetBytes(shutDownMessage.To()));
     }
 }
