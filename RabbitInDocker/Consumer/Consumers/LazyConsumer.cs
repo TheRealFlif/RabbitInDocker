@@ -18,11 +18,6 @@ public class LazyConsumer : IConsumer
     private int _minWait;
     private int _maxWait;
 
-    public LazyConsumer(IModel channel, string name) : this(channel, name, 100, 100)
-    {
-
-    }
-
     public LazyConsumer(IModel channel, string name, int minWait, int maxWait)
     {
         _minWait = minWait < maxWait ? minWait : maxWait;
@@ -52,15 +47,22 @@ public class LazyConsumer : IConsumer
         var deliveryTag = basicDeliverEventArgs.DeliveryTag;
 
         var body = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray());
-        var message = GetMessage(_name, ++messageCount, body);
-
-        Thread.Sleep(workTime);
-        Console.WriteLine(message);
+        var message = GetMessage(body);
         _channel.BasicAck(deliveryTag, false);
+        
+        if(message == "q")
+        {
+            ExitMessageReceived?.Invoke(this, new EventArgs());
+        }
+        else
+        {
+            Thread.Sleep(workTime);
+            Console.WriteLine(message);
+        }
     }
 
     private static object _lock = new();
-    private string GetMessage(string name, int localCount, string message)
+    private string GetMessage(string message)
     {
         var returnValue = string.Empty;
         Envelope<string>? messageObject;
@@ -69,14 +71,14 @@ public class LazyConsumer : IConsumer
             messageObject = Envelope<string>.From(message);
             if ((messageObject?.Data.StartsWith('q')).GetValueOrDefault())
             {
-                ExitMessageReceived?.Invoke(this, new EventArgs());
+                returnValue = "q";
             }
         }
         catch (Exception e)
         {
             return e.Message;
         }
-        if (messageObject != null)
+        if (messageObject != null && string.IsNullOrEmpty(returnValue))
         {
             lock (_lock)
             {
@@ -84,11 +86,11 @@ public class LazyConsumer : IConsumer
                 var sender = messageObject["sender"];
                 var messageNumber = messageObject["messageNumber"];
 
-                return $"{name} (#{localCount:00} of {_totalMessageCount:00}): handling {messageObject.Data} from {sender} no: {messageNumber}";
+                returnValue = $"{_name} (#{++messageCount:00} of {_totalMessageCount:00}): handling {messageObject.Data} from {sender} no: {messageNumber}";
             }
         }
 
-        return string.Empty;
+        return returnValue;
     }
 
     public void Dispose()
