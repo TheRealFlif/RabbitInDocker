@@ -42,23 +42,26 @@ public class LazyConsumer : IConsumer
 
     private void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)
     {
-        var workTime = _random.Next(_minWait, _maxWait);
-        Console.WriteLine($"{_name} received message and working for {workTime} ms.");
         var deliveryTag = basicDeliverEventArgs.DeliveryTag;
-
         var body = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray());
         var message = GetMessage(body);
-        _channel.BasicAck(deliveryTag, false);
-        
+                
         if(message == "q")
         {
+            Console.WriteLine($"{_name} got shut down message");
+            _channel.BasicAck(deliveryTag, false);
+            Thread.Sleep(500);
             ExitMessageReceived?.Invoke(this, new EventArgs());
+            return;
         }
         else
         {
-            Thread.Sleep(workTime);
+            var workTime = _random.Next(_minWait, _maxWait);
             Console.WriteLine(message);
+            Thread.Sleep(workTime);
         }
+
+        _channel.BasicAck(deliveryTag, false);
     }
 
     private static object _lock = new();
@@ -86,7 +89,8 @@ public class LazyConsumer : IConsumer
                 var sender = messageObject["sender"];
                 var messageNumber = messageObject["messageNumber"];
 
-                returnValue = $"{_name} (#{++messageCount:00} of {_totalMessageCount:00}): handling {messageObject.Data} from {sender} no: {messageNumber}";
+                //returnValue = $"{_name} (#{++messageCount:00} of {_totalMessageCount:00}): handling {messageObject.Data} from {sender} no: {messageNumber}";
+                returnValue = $"{_name} got message {sender}:{messageNumber}";
             }
         }
 

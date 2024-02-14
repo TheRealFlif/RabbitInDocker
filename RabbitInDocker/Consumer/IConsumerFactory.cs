@@ -1,9 +1,9 @@
 ﻿using Consumer.Consumers;
+using Producer.Entities;
 
-namespace Consumer
+namespace Consumer;
+
+public interface IConsumerFactory
 {
-    public interface IConsumerFactory
-    {
-        public IConsumer Create(string queueName);
-    }
+    public IConsumer Create(ConsumerSettings consumerSettings);
 }

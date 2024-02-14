@@ -11,7 +11,7 @@ internal class Program
         var factory = new ProducerFactory();
 
         var producers = new[] { 1, 2, 3 }
-            .Select(i => new ProducerSettings(100, 1000, "letterbox", $"#{i}"))
+            .Select(i => new ProducerSettings(1, 1, "letterbox", $"#{i}"))
             .Select(factory.Create)
             .Select(p => p as AutomaticProducer);
 
@@ -27,9 +27,12 @@ internal class Program
         while(readValue != "q")
         {
             tasks = producers
-            .Select(ap => Task.Run(() => ap?.SendMessages(readValue?.Length ?? 0)))
+            .Select(ap => Task.Run(() => ap?.SendMessages(readValue?.Length ?? 1)))
             .ToArray();
-
+            
+            Task.WaitAll(tasks);
+            Console.WriteLine("All messages sent");
+            Console.WriteLine("Write next messages to send (q to exit)");
             readValue = Console.ReadLine();
         }
 

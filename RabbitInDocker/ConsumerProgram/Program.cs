@@ -1,5 +1,6 @@
 ﻿using Consumer;
 using Consumer.Consumers;
+using Producer.Entities;
 
 namespace ConsumerProgram;
 
@@ -9,19 +10,14 @@ internal class Program
 
     static void Main(string[] args)
     {
-        var factory = new ConsumerFactory();
-        _consumers.Add(factory.Create("letterbox"));
-        _consumers.Add(factory.Create("letterbox"));
-        _consumers.Add(factory.Create("letterbox"));
-        _consumers.Add(factory.Create("letterbox"));
+        var factory = new ConsumerFactory(ExitMessageReceived);
+        _consumers.Add(factory.Create(new ConsumerSettings(100, 100, "letterbox", "Pineapple", 10)));
 
-        foreach (var consumer in _consumers)
-        {
-            if (consumer is IConsumer iConsumer)
-            {
-                iConsumer.ExitMessageReceived += ExitMessageReceived;
-            }
-        }
+        var queueNames = new[] { "letterbox", "letterbox", "letterbox" };
+        queueNames
+            .Select(xx => new ConsumerSettings(100, 100, xx, string.Empty, 1))
+            .ToList()
+            .ForEach(cs => _consumers.Add(factory.Create(cs)));
 
         var running = true;
         while (running) ;

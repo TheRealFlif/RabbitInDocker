@@ -1,4 +1,5 @@
 ﻿using Consumer.Consumers;
+using Producer.Entities;
 using RabbitMQ.Client;
 
 namespace Consumer;
@@ -8,35 +9,26 @@ public class ConsumerFactory : IConsumerFactory
     readonly ConnectionFactory _factory;
     readonly Dictionary<string, int> _consumerCounter = [];
 
-    readonly int _minSleep;
-    readonly int _maxSleep;
-
-    public ConsumerFactory() : this(1000, 4000) { }
-
-    public ConsumerFactory(int minSleep, int maxSleep)
+    private EventHandler _exitMessageReceived;
+    public ConsumerFactory(EventHandler exitMessageReceived)
     {
-        _minSleep = minSleep < maxSleep ? minSleep : maxSleep;
-        _maxSleep = maxSleep > minSleep ? maxSleep : minSleep;
-
+        _exitMessageReceived = exitMessageReceived;
         _factory = new ConnectionFactory { HostName = "localhost" };
     }
 
-    public IConsumer Create(string queueName)
-    {
-        return Create(queueName, CreateConsumerName(queueName));
-    }
-
-    private static bool _first = true;
-    public IConsumer Create(string queueName, string consumerName)
+    public IConsumer Create (ConsumerSettings consumerSettings)
     {
         var connection = _factory.CreateConnection();
         var channel = connection.CreateModel();
-        channel.QueueDeclare(queueName, true, false, false, null);
-        var prefetchSize = 0u; // the size of message buffer in bytes that the client can use to prefetch messages, 0 = no limit and is the only allowed value in RabbitMQ.Client
-        ushort prefetchCount = (ushort)(_first ? 10 : 1); // the number of messages to retrieve before stop sending new messages to the channel
-        _first = false;
-        channel.BasicQos(prefetchSize, prefetchCount, false); //false = setttings apply only to this channel and consumers on the channel
-        var returnValue = new LazyConsumer(channel, consumerName, _minSleep, _maxSleep);
+        channel.QueueDeclare(consumerSettings.QueueName, true, false, false, null);
+        channel.BasicQos(0, consumerSettings.PrefetchCount, false);
+
+        string name = string.IsNullOrEmpty(consumerSettings.Name)
+            ? CreateConsumerName(consumerSettings.QueueName)
+            : consumerSettings.Name;
+        var returnValue = new LazyConsumer(channel, name, consumerSettings.MinWait, consumerSettings.MaxWait);
+        returnValue.ExitMessageReceived += _exitMessageReceived;
+        
         return returnValue;
     }
 
