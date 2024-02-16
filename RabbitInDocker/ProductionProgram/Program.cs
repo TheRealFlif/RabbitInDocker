@@ -11,27 +11,40 @@ internal class Program
         var factory = new ProducerFactory();
 
         var producers = new[] { 1, 2, 3 }
-            .Select(i => new ProducerSettings(1, 1, "letterbox", $"#{i}"))
+            .Select(i => new ProducerSettings(1, 1, "Pubsub", "letterbox", $"#{i}"))
             .Select(factory.Create)
-            .Select(p => p as AutomaticProducer);
+            .Select(p => p as FanoutProducer);
 
         var tasks = producers
-            .Select(ap => Task.Run(() => ap?.SendMessages(10)))
+            .Select(ap => Task.Run(() => {
+                for (var i = 0; i < 10; i++)
+                {
+                    ap?.Send(Guid.NewGuid().ToString("N"));
+                }
+            }))
             .ToArray();
-        
+
         Task.WaitAll(tasks);
 
         Console.WriteLine("All messages sent");
+        
         Console.WriteLine("Write next messages to send (q to exit)");
         var readValue = Console.ReadLine();
-        while(readValue != "q")
+        while (readValue != "q")
         {
             tasks = producers
-            .Select(ap => Task.Run(() => ap?.SendMessages(readValue?.Length ?? 1)))
+            .Select(ap => Task.Run(() =>
+            {
+                for (var i = 0; i < (readValue?.Length ?? 1); i++)
+                {
+                    ap?.Send(Guid.NewGuid().ToString("N"));
+                }
+            }))
             .ToArray();
-            
             Task.WaitAll(tasks);
+            
             Console.WriteLine("All messages sent");
+            
             Console.WriteLine("Write next messages to send (q to exit)");
             readValue = Console.ReadLine();
         }

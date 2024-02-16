@@ -11,11 +11,13 @@ internal class Program
     static void Main(string[] args)
     {
         var factory = new ConsumerFactory(ExitMessageReceived);
-        _consumers.Add(factory.Create(new ConsumerSettings(100, 100, "letterbox", "Pineapple", 10)));
+        var loggerSettings = ConsumerSettings.SubscriberSettings("Logger", "Pubsub", "");
+         
+        _consumers.Add(factory.Create(loggerSettings));
 
         var queueNames = new[] { "letterbox", "letterbox", "letterbox" };
         queueNames
-            .Select(xx => new ConsumerSettings(100, 100, xx, string.Empty, 1))
+            .Select(xx => ConsumerSettings.SubscriberSettings(xx, "Pubsub", string.Empty))
             .ToList()
             .ForEach(cs => _consumers.Add(factory.Create(cs)));
 

@@ -16,19 +16,24 @@ public class ConsumerFactory : IConsumerFactory
         _factory = new ConnectionFactory { HostName = "localhost" };
     }
 
-    public IConsumer Create (ConsumerSettings consumerSettings)
+    public IConsumer Create(ConsumerSettings? consumerSettings)
     {
+        if (consumerSettings == null) { throw new ArgumentNullException(nameof(consumerSettings)); }
+
         var connection = _factory.CreateConnection();
         var channel = connection.CreateModel();
-        channel.QueueDeclare(consumerSettings.QueueName, true, false, false, null);
-        channel.BasicQos(0, consumerSettings.PrefetchCount, false);
+        channel.BasicQos(0, consumerSettings?.PrefetchCount ?? 1, false);
+        channel.ExchangeDeclare(consumerSettings?.ExchangeName, ExchangeType.Fanout, true);
 
-        string name = string.IsNullOrEmpty(consumerSettings.Name)
-            ? CreateConsumerName(consumerSettings.QueueName)
-            : consumerSettings.Name;
-        var returnValue = new LazyConsumer(channel, name, consumerSettings.MinWait, consumerSettings.MaxWait);
+        var queueName = channel.QueueDeclare().QueueName;
+        channel.QueueBind(queueName, consumerSettings?.ExchangeName, consumerSettings?.RoutingKey);
+
+        string? name = string.IsNullOrEmpty(consumerSettings?.Name)
+            ? CreateConsumerName(consumerSettings?.QueueName)
+            : consumerSettings?.Name;
+        var returnValue = new Subscriber(channel, name ?? string.Empty, new WaitTimeCreator(consumerSettings?.MinWait ?? 0, consumerSettings?.MaxWait ?? 0));
         returnValue.ExitMessageReceived += _exitMessageReceived;
-        
+
         return returnValue;
     }
 

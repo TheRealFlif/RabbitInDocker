@@ -2,7 +2,6 @@
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client;
 using System.Text;
-using System.ComponentModel.DataAnnotations;
 
 namespace Consumer.Consumers;
 
@@ -10,13 +9,11 @@ public class LazyConsumer : IConsumer
 {
     readonly IModel _channel;
     readonly EventingBasicConsumer? _consumer;
-    private static int _totalMessageCount;
-    private int messageCount;
     readonly string _name;
-    public event EventHandler? ExitMessageReceived;
-
     private int _minWait;
     private int _maxWait;
+
+    public event EventHandler? ExitMessageReceived;
 
     public LazyConsumer(IModel channel, string name, int minWait, int maxWait)
     {
@@ -45,8 +42,8 @@ public class LazyConsumer : IConsumer
         var deliveryTag = basicDeliverEventArgs.DeliveryTag;
         var body = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray());
         var message = GetMessage(body);
-                
-        if(message == "q")
+
+        if (message == "q")
         {
             Console.WriteLine($"{_name} got shut down message");
             _channel.BasicAck(deliveryTag, false);
@@ -64,7 +61,6 @@ public class LazyConsumer : IConsumer
         _channel.BasicAck(deliveryTag, false);
     }
 
-    private static object _lock = new();
     private string GetMessage(string message)
     {
         var returnValue = string.Empty;
@@ -83,15 +79,10 @@ public class LazyConsumer : IConsumer
         }
         if (messageObject != null && string.IsNullOrEmpty(returnValue))
         {
-            lock (_lock)
-            {
-                _totalMessageCount++;
-                var sender = messageObject["sender"];
-                var messageNumber = messageObject["messageNumber"];
+            var sender = messageObject["sender"];
+            var messageNumber = messageObject["messageNumber"];
 
-                //returnValue = $"{_name} (#{++messageCount:00} of {_totalMessageCount:00}): handling {messageObject.Data} from {sender} no: {messageNumber}";
-                returnValue = $"{_name} got message {sender}:{messageNumber}";
-            }
+            returnValue = $"{_name} got message {sender}:{messageNumber}";
         }
 
         return returnValue;
