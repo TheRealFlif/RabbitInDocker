@@ -18,27 +18,42 @@ public class ConsumerFactory : IConsumerFactory
 
     public IConsumer Create(ConsumerSettings consumerSettings)
     {
-        var channel = _factory
-            .CreateConnection()
-            .CreateModel();
-        channel.BasicQos(0, consumerSettings.PrefetchCount, false);
-        channel.ExchangeDeclare(consumerSettings.ExchangeName, ExchangeType.Fanout, true);
+        var returnValue = CreateFanoutConsumer(consumerSettings);
 
-        var queueName = channel.QueueDeclare().QueueName;
-        channel.QueueBind(
-            queueName, 
-            consumerSettings.ExchangeName, 
-            consumerSettings.RoutingKey);
+        returnValue.ExitMessageReceived += _exitMessageReceived;
+
+        return returnValue;
+    }
+
+    private IConsumer CreateFanoutConsumer(ConsumerSettings consumerSettings)
+    {
+        var channel = CreateChannelForFanOut(consumerSettings);
 
         var name = string.IsNullOrEmpty(consumerSettings.Name)
             ? CreateConsumerName(consumerSettings.QueueName)
             : consumerSettings.Name;
         var waiter = new WaitTimeCreator(consumerSettings.MinWait, consumerSettings.MaxWait);
         var returnValue = new Subscriber(
-            channel, 
-            name, 
+            channel,
+            name,
             waiter);
-        returnValue.ExitMessageReceived += _exitMessageReceived;
+        
+        return returnValue;
+    }
+
+    private IModel CreateChannelForFanOut(ConsumerSettings consumerSettings)
+    {
+        var returnValue = _factory
+            .CreateConnection()
+            .CreateModel();
+        returnValue.BasicQos(0, consumerSettings.PrefetchCount, false);
+        returnValue.ExchangeDeclare(consumerSettings.ExchangeName, ExchangeType.Fanout, true);
+
+        var queueName = returnValue.QueueDeclare().QueueName;
+        returnValue.QueueBind(
+            queueName,
+            consumerSettings.ExchangeName,
+            consumerSettings.RoutingKey);
 
         return returnValue;
     }
