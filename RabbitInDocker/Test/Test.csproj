@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Producer\" />
+    <ProjectReference Include="..\Producer\Producer.csproj" />
   </ItemGroup>
 
 </Project>

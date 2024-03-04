@@ -15,7 +15,7 @@ internal class Program
          
         _consumers.Add(factory.Create(loggerSettings));
 
-        var queueNames = new[] { "letterbox", "letterbox", "letterbox" };
+        var queueNames = new[] { "letterbox1", "letterbox2", "letterbox3" };
         queueNames
             .Select(xx => ConsumerSettings.SubscriberSettings(xx, "Pubsub", string.Empty))
             .ToList()

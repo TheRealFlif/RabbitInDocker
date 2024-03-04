@@ -5,9 +5,6 @@ namespace Producer.Producers
 {
     public class FanoutProducer : ProducerBase<string>
     {
-        //private readonly IModel _channel;
-        //private readonly ProducerSettings _producerSettings;
-
         public FanoutProducer(
             IModel channel, 
             ProducerSettings producerSettings) : base(channel, producerSettings) { }

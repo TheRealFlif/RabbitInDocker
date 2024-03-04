@@ -2,6 +2,7 @@
 using RabbitMQ.Client;
 using System.Text;
 using Consumer.Entities;
+using System.Text.Json.Nodes;
 
 namespace Consumer.Consumers;
 
@@ -40,6 +41,7 @@ internal class Subscriber : IConsumer
     {
         var deliveryTag = basicDeliverEventArgs.DeliveryTag;
         var body = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray());
+        var envelope = Envelope<string>.From(body);
         var message = GetMessage(body);
 
         var workTime = _waitTimeCreator.GetMilliseconds();
@@ -47,6 +49,10 @@ internal class Subscriber : IConsumer
         Thread.Sleep(workTime);
 
         _channel.BasicAck(deliveryTag, false);
+        if ((envelope?.Data??string.Empty).StartsWith('q'))
+        {
+            ExitMessageReceived?.Invoke(this, new EventArgs());
+        }
     }
 
     protected virtual string GetMessage(string message)

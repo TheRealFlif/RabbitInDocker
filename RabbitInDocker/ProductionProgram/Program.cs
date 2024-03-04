@@ -49,6 +49,8 @@ internal class Program
             readValue = Console.ReadLine();
         }
 
+        Task.WaitAny(producers.Select(ap => Task.Run(() => { ap.Send("q"); })).ToArray());
+
         Console.WriteLine("Shutting down");
         producers?.First()?.ShutDown();
         Console.ReadLine();
