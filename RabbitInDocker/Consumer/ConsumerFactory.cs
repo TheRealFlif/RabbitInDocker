@@ -9,29 +9,35 @@ public class ConsumerFactory : IConsumerFactory
     readonly ConnectionFactory _factory;
     readonly Dictionary<string, int> _consumerCounter = [];
 
-    private EventHandler _exitMessageReceived;
+    readonly EventHandler _exitMessageReceived;
     public ConsumerFactory(EventHandler exitMessageReceived)
     {
         _exitMessageReceived = exitMessageReceived;
         _factory = new ConnectionFactory { HostName = "localhost" };
     }
 
-    public IConsumer Create(ConsumerSettings? consumerSettings)
+    public IConsumer Create(ConsumerSettings consumerSettings)
     {
-        if (consumerSettings == null) { throw new ArgumentNullException(nameof(consumerSettings)); }
-
-        var connection = _factory.CreateConnection();
-        var channel = connection.CreateModel();
-        channel.BasicQos(0, consumerSettings?.PrefetchCount ?? 1, false);
-        channel.ExchangeDeclare(consumerSettings?.ExchangeName, ExchangeType.Fanout, true);
+        var channel = _factory
+            .CreateConnection()
+            .CreateModel();
+        channel.BasicQos(0, consumerSettings.PrefetchCount, false);
+        channel.ExchangeDeclare(consumerSettings.ExchangeName, ExchangeType.Fanout, true);
 
         var queueName = channel.QueueDeclare().QueueName;
-        channel.QueueBind(queueName, consumerSettings?.ExchangeName, consumerSettings?.RoutingKey);
+        channel.QueueBind(
+            queueName, 
+            consumerSettings.ExchangeName, 
+            consumerSettings.RoutingKey);
 
-        string? name = string.IsNullOrEmpty(consumerSettings?.Name)
-            ? CreateConsumerName(consumerSettings?.QueueName)
-            : consumerSettings?.Name;
-        var returnValue = new Subscriber(channel, name ?? string.Empty, new WaitTimeCreator(consumerSettings?.MinWait ?? 0, consumerSettings?.MaxWait ?? 0));
+        var name = string.IsNullOrEmpty(consumerSettings.Name)
+            ? CreateConsumerName(consumerSettings.QueueName)
+            : consumerSettings.Name;
+        var waiter = new WaitTimeCreator(consumerSettings.MinWait, consumerSettings.MaxWait);
+        var returnValue = new Subscriber(
+            channel, 
+            name, 
+            waiter);
         returnValue.ExitMessageReceived += _exitMessageReceived;
 
         return returnValue;

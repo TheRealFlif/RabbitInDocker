@@ -52,7 +52,7 @@ public class DefaultConsumer : IConsumer
         }
     }
 
-    private static object _lock = new();
+    static readonly object _lock = new();
     private static string GetMessage(string name, int localCount, string message)
     {
         lock (_lock)

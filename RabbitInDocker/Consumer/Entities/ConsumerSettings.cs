@@ -19,8 +19,7 @@ public struct ConsumerSettings
     public ushort PrefetchCount { get; }
 
     public ConsumerType ConsumerType
-    {
-        get => _consumerType;
+    { readonly get => _consumerType;
         set => _consumerType = Enum.IsDefined(typeof(ConsumerType), value)
             ? value
             : ConsumerType.Unknown;
@@ -43,7 +42,7 @@ public struct ConsumerSettings
         PrefetchCount = prefetchCount;
     }
 
-    public static ConsumerSettings? SubscriberSettings(string name, string exchangeName, string routingKey)
+    public static ConsumerSettings SubscriberSettings(string name, string exchangeName, string routingKey)
     {
         var returnValue = new ConsumerSettings(0, 0, string.Empty, name, 1)
         {

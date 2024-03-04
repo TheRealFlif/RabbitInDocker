@@ -8,15 +8,36 @@ public class ProducerFactory
 {
     public IProducer Create(ProducerSettings settings)
     {
-        return new FanoutProducer(CreateChannel(settings), settings);
+        var channel = CreateChannel(settings);
+        return new FanoutProducer(
+            channel, 
+            settings);
     }
 
-    private IModel CreateChannel(ProducerSettings producerSettings)
+    private static IModel CreateChannel(ProducerSettings producerSettings)
     {
-        var factory = new ConnectionFactory { HostName = "localhost" };
-        var connection = factory.CreateConnection();
-        IModel? returnValue = connection.CreateModel();
-        returnValue.QueueDeclare(producerSettings.RoutingKey, true, false, false, null);
+        if(producerSettings.TypeOfExchange == TypeOfExchange.Unknown || 
+            !Enum.IsDefined(producerSettings.TypeOfExchange))
+        {
+            throw new ArgumentException(nameof(producerSettings));
+        }
+
+        if(producerSettings.TypeOfExchange == TypeOfExchange.FanOut)
+            return CreateChannelForFanOut(producerSettings);
+
+        throw new NotImplementedException($"Method not implemented for '{producerSettings.TypeOfExchange}'");
+    }
+
+    private static IModel CreateChannelForFanOut(ProducerSettings producerSettings)
+    {
+        var returnValue = new ConnectionFactory { HostName = "localhost" }
+            .CreateConnection()
+            .CreateModel();
+        returnValue.ExchangeDeclare(
+            producerSettings.ExchangeName, 
+            ExchangeType.Fanout, 
+            true, 
+            false);
 
         return returnValue;
     }

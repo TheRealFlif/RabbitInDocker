@@ -5,5 +5,5 @@ namespace Consumer;
 
 public interface IConsumerFactory
 {
-    public IConsumer Create(ConsumerSettings? consumerSettings);
+    public IConsumer Create(ConsumerSettings consumerSettings);
 }

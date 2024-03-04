@@ -6,12 +6,13 @@ using Producer.Producers;
 
 internal class Program
 {
+    static readonly int[] producerNumbers = [1, 2, 3];
     static void Main(string[] args)
     {
         var factory = new ProducerFactory();
 
-        var producers = new[] { 1, 2, 3 }
-            .Select(i => new ProducerSettings(1, 1, "Pubsub", "letterbox", $"#{i}"))
+        var producers = producerNumbers
+            .Select(i => new ProducerSettings(1, 1, "Pubsub", TypeOfExchange.FanOut, "letterbox", $"#{i}"))
             .Select(factory.Create)
             .Select(p => p as FanoutProducer);
 
@@ -49,7 +50,7 @@ internal class Program
             readValue = Console.ReadLine();
         }
 
-        Task.WaitAny(producers.Select(ap => Task.Run(() => { ap.Send("q"); })).ToArray());
+        Task.WaitAny(producers.Select(ap => Task.Run(() => { ap?.Send("q"); })).ToArray());
 
         Console.WriteLine("Shutting down");
         producers?.First()?.ShutDown();

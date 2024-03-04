@@ -26,7 +26,7 @@ internal class Subscriber : IConsumer
         try
         {
             _consumer = new EventingBasicConsumer(_channel);
-            _name = _name ?? _consumer.ConsumerTags.FirstOrDefault(string.Empty);
+            _name ??= _consumer.ConsumerTags.FirstOrDefault(string.Empty);
             _consumer.Received += Consumer_Received;
             _channel.BasicConsume(_channel.CurrentQueue, false, _consumer);
         }

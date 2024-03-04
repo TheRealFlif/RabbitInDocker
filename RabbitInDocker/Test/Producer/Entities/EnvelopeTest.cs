@@ -7,7 +7,7 @@ namespace Test.Producer.Entities;
 internal class EnvelopeTest
 {
     [Test]
-    public void To_AEnvelopeWithAstring_ReturnsAString()
+    public void To_AEnvelopeWithAString_ReturnsAString()
     {
         //Arrange
         var sut = new Envelope<string>("test");
