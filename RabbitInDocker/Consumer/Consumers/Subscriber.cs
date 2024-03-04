@@ -2,7 +2,6 @@
 using RabbitMQ.Client;
 using System.Text;
 using Consumer.Entities;
-using System.Text.Json.Nodes;
 
 namespace Consumer.Consumers;
 
