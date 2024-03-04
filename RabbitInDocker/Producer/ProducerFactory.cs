@@ -6,6 +6,12 @@ using RabbitMQ.Client;
 
 public class ProducerFactory
 {
+    private readonly ConnectionFactory _factory;
+    public ProducerFactory()
+    {
+        _factory = new ConnectionFactory { HostName = "localhost" };
+    }
+
     public IProducer Create(ProducerSettings settings)
     {
         var channel = CreateChannel(settings);
@@ -14,30 +20,48 @@ public class ProducerFactory
             settings);
     }
 
-    private static IModel CreateChannel(ProducerSettings producerSettings)
+    private IModel CreateChannel(ProducerSettings producerSettings)
     {
         if(producerSettings.TypeOfExchange == TypeOfExchange.Unknown || 
             !Enum.IsDefined(producerSettings.TypeOfExchange))
         {
-            throw new ArgumentException(nameof(producerSettings));
+            throw new ArgumentException($"Wrong TypeOfExchange '{producerSettings.TypeOfExchange}'", nameof(producerSettings));
         }
 
         if(producerSettings.TypeOfExchange == TypeOfExchange.FanOut)
             return CreateChannelForFanOut(producerSettings);
 
+        if (producerSettings.TypeOfExchange == TypeOfExchange.Direct)
+            return CreateChannelForDirect(producerSettings);
+
         throw new NotImplementedException($"Method not implemented for '{producerSettings.TypeOfExchange}'");
     }
 
-    private static IModel CreateChannelForFanOut(ProducerSettings producerSettings)
+    private IModel CreateChannelForDirect (ProducerSettings producerSettings)
     {
-        var returnValue = new ConnectionFactory { HostName = "localhost" }
+        var returnValue = _factory
+            .CreateConnection()
+            .CreateModel();
+
+        returnValue.ExchangeDeclare(
+            producerSettings.ExchangeName, 
+            ExchangeType.Direct, 
+            true, 
+            true);
+
+        return returnValue;
+    }
+
+    private IModel CreateChannelForFanOut(ProducerSettings producerSettings)
+    {
+        var returnValue = _factory
             .CreateConnection()
             .CreateModel();
         returnValue.ExchangeDeclare(
             producerSettings.ExchangeName, 
             ExchangeType.Fanout, 
             true, 
-            false);
+            true);
 
         return returnValue;
     }

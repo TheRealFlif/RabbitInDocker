@@ -35,7 +35,7 @@ public class ProducerBase<T> : IProducer
         Sleep();
     }
 
-    int _messageNumber = 0;
+    private int _messageNumber = 0;
     protected virtual Envelope<T>? Create(T? body)
     {
         Envelope<T>? returnValue = default;

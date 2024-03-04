@@ -10,15 +10,13 @@ public class LazyConsumer : IConsumer
     readonly IModel _channel;
     readonly EventingBasicConsumer? _consumer;
     readonly string _name;
-    private int _minWait;
-    private int _maxWait;
-
+    readonly WaitTimeCreator _waitTimeCreator;
+    
     public event EventHandler? ExitMessageReceived;
 
-    public LazyConsumer(IModel channel, string name, int minWait, int maxWait)
+    public LazyConsumer(IModel channel, string name, WaitTimeCreator waitTimeCreator)
     {
-        _minWait = minWait < maxWait ? minWait : maxWait;
-        _maxWait = maxWait > minWait ? maxWait : minWait;
+        _waitTimeCreator = waitTimeCreator;
         _name = name;
         _channel = channel;
 
@@ -53,9 +51,8 @@ public class LazyConsumer : IConsumer
         }
         else
         {
-            var workTime = _random.Next(_minWait, _maxWait);
             Console.WriteLine(message);
-            Thread.Sleep(workTime);
+            Thread.Sleep(_waitTimeCreator.GetMilliseconds());
         }
 
         _channel.BasicAck(deliveryTag, false);

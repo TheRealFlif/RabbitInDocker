@@ -9,12 +9,18 @@ internal class Program
     static readonly int[] producerNumbers = [1, 2, 3];
     static void Main(string[] args)
     {
+        MainForFanOut();
+    }
+
+    private static void MainForFanOut()
+    {
         var factory = new ProducerFactory();
 
         var producers = producerNumbers
             .Select(i => new ProducerSettings(1, 1, "Pubsub", TypeOfExchange.FanOut, "letterbox", $"#{i}"))
             .Select(factory.Create)
-            .Select(p => p as FanoutProducer);
+            .Select(p => p as FanoutProducer)
+            .ToArray();
 
         var tasks = producers
             .Select(ap => Task.Run(() => {

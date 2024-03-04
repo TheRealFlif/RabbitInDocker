@@ -11,10 +11,6 @@ namespace Producer.Producers
 
         public override void Send(string? message)
         {
-            Channel.ExchangeDeclare(
-                Settings.ExchangeName, 
-                ExchangeType.Fanout, 
-                durable:true);
             Console.WriteLine($"{Settings.Name} sending '{message}'");
             base.Send(message);
             Console.WriteLine($"{Settings.Name} send '{message}'");

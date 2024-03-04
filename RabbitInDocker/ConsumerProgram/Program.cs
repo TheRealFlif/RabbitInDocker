@@ -10,14 +10,19 @@ internal class Program
 
     static void Main(string[] args)
     {
+        MainForFanOut();
+    }
+
+    private static void MainForFanOut()
+    {
         var factory = new ConsumerFactory(ExitMessageReceived);
         var loggerSettings = ConsumerSettings.SubscriberSettings("Logger", "Pubsub", "");
-         
+
         _consumers.Add(factory.Create(loggerSettings));
 
         var queueNames = new[] { "letterbox1", "letterbox2", "letterbox3" };
         queueNames
-            .Select(xx => ConsumerSettings.SubscriberSettings(xx, "Pubsub", string.Empty))
+            .Select(n => ConsumerSettings.SubscriberSettings(n, "Pubsub", string.Empty))
             .ToList()
             .ForEach(cs => _consumers.Add(factory.Create(cs)));
 
