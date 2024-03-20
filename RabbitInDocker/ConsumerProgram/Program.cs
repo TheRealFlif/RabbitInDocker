@@ -11,6 +11,17 @@ internal class Program
     static void Main(string[] args)
     {
         MainForFanOut();
+        //MainForDefaultConsumer();
+    }
+
+    private static void MainForDefaultConsumer()
+    {
+        var factory = new ConsumerFactory(ExitMessageReceived);
+        var settings = new ConsumerSettings(1, 1000, "letterbox", "DefaultConsumer", 1) { 
+            ExchangeName = "Direct",
+            ConsumerType = ConsumerType.Default };
+        var consumer = factory.Create(settings);
+        while (true) ;
     }
 
     private static void MainForFanOut()
@@ -18,13 +29,14 @@ internal class Program
         var factory = new ConsumerFactory(ExitMessageReceived);
         var loggerSettings = ConsumerSettings.SubscriberSettings("Logger", "Pubsub", "");
 
-        _consumers.Add(factory.Create(loggerSettings));
+        var consumers = new System.Collections.Concurrent.BlockingCollection<IConsumer>();
+        consumers.Add(factory.Create(loggerSettings));
 
         var queueNames = new[] { "letterbox1", "letterbox2", "letterbox3" };
         queueNames
             .Select(n => ConsumerSettings.SubscriberSettings(n, "Pubsub", string.Empty))
             .ToList()
-            .ForEach(cs => _consumers.Add(factory.Create(cs)));
+            .ForEach(cs => consumers.Add(factory.Create(cs)));
 
         var running = true;
         while (running) ;

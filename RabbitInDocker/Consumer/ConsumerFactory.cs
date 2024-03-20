@@ -65,8 +65,9 @@ public class ConsumerFactory : IConsumerFactory
             ExchangeType.Direct,
             true,
             true);
-
-        var queueName = returnValue.QueueDeclare().QueueName;
+        
+        var result =  returnValue.QueueDeclare(consumerSettings.QueueName, true, true);
+        var queueName = result.QueueName;
         returnValue.QueueBind(
             queueName,
             consumerSettings.ExchangeName,

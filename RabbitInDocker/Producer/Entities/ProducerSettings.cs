@@ -4,6 +4,6 @@ public readonly record struct ProducerSettings (
     int MinWait, 
     int MaxWait, 
     string ExchangeName, 
-    TypeOfExchange TypeOfExchange,
+    ProducerType TypeOfExchange,
     string RoutingKey, 
     string Name) { }

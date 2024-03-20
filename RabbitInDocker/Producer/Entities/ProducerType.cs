@@ -1,9 +1,9 @@
 ﻿namespace Producer.Entities
 {
-    public enum TypeOfExchange
+    public enum ProducerType
     {
         Unknown,
-        Direct,
+        ReadConsole,
         FanOut
     }
 }

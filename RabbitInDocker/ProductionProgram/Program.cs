@@ -9,7 +9,28 @@ internal class Program
     static readonly int[] producerNumbers = [1, 2, 3];
     static void Main(string[] args)
     {
+        //MainForDirectVersion1();
         MainForFanOut();
+    }
+
+    private static void MainForDirectVersion1()
+    {
+        var factory = new ProducerFactory();
+        var producerSetting = new ProducerSettings(0, 0, "Direct", ProducerType.ReadConsole, "Payments", "payments");
+        var producer = factory.Create(producerSetting) as ReadConsoleProducer
+            ?? throw new ApplicationException("Unable to create producer");
+
+        Console.WriteLine("Write next messages to send (q to exit)");
+        var readValue = Console.ReadLine();
+        while (readValue != "q")
+        {
+            producer.Send(readValue);
+        }
+
+        producer.Send("q");
+        Console.WriteLine("Shutting down");
+        producer.ShutDown();
+        Console.ReadLine();
     }
 
     private static void MainForFanOut()
@@ -17,13 +38,14 @@ internal class Program
         var factory = new ProducerFactory();
 
         var producers = producerNumbers
-            .Select(i => new ProducerSettings(1, 1, "Pubsub", TypeOfExchange.FanOut, "letterbox", $"#{i}"))
+            .Select(i => new ProducerSettings(1, 1, "Pubsub", ProducerType.FanOut, "letterbox", $"#{i}"))
             .Select(factory.Create)
             .Select(p => p as FanoutProducer)
-            .ToArray();
+           .ToArray();
 
         var tasks = producers
-            .Select(ap => Task.Run(() => {
+            .Select(ap => Task.Run(() =>
+            {
                 for (var i = 0; i < 10; i++)
                 {
                     ap?.Send(Guid.NewGuid().ToString("N"));
@@ -34,7 +56,7 @@ internal class Program
         Task.WaitAll(tasks);
 
         Console.WriteLine("All messages sent");
-        
+
         Console.WriteLine("Write next messages to send (q to exit)");
         var readValue = Console.ReadLine();
         while (readValue != "q")
@@ -49,9 +71,9 @@ internal class Program
             }))
             .ToArray();
             Task.WaitAll(tasks);
-            
+
             Console.WriteLine("All messages sent");
-            
+
             Console.WriteLine("Write next messages to send (q to exit)");
             readValue = Console.ReadLine();
         }

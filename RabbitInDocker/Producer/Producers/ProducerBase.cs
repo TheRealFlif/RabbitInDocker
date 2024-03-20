@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 
 namespace Producer.Producers;
 
-public class ProducerBase<T> : IProducer
+public class ProducerBase<T> : IProducer, IDisposable
 {
     protected IModel Channel { get; init; }
     protected ProducerSettings Settings { get; init; }
@@ -51,8 +51,40 @@ public class ProducerBase<T> : IProducer
     public virtual void ShutDown() { }
 
     static WaitTimeCreator _waitTimeCreator;
+    private bool _disposedValue;
+
     protected void Sleep()
     {
         Thread.Sleep(_waitTimeCreator.GetMilliseconds());
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                Channel.Dispose();
+                // TODO: dispose managed state (managed objects)
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+            // TODO: set large fields to null
+            _disposedValue = true;
+        }
+    }
+
+    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+    // ~ProducerBase()
+    // {
+    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+    //     Dispose(disposing: false);
+    // }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
