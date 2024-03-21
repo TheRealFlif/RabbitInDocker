@@ -32,7 +32,7 @@ public class ConsumerFactory : IConsumerFactory
             ? CreateConsumerName(consumerSettings.QueueName)
             : consumerSettings.Name;
         var waiter = new WaitTimeCreator(consumerSettings.MinWait, consumerSettings.MaxWait);
-
+        
         if (consumerSettings.ConsumerType == ConsumerType.Subscriber)
         {
             var channel = CreateChannelForFanOut(consumerSettings);
@@ -41,12 +41,15 @@ public class ConsumerFactory : IConsumerFactory
                 name,
                 waiter);
         }
-        if(consumerSettings.ConsumerType == ConsumerType.Default || consumerSettings.ConsumerType == ConsumerType.Lazy)
+        if(new[] { ConsumerType.Default, ConsumerType.Lazy, ConsumerType.MessageConsumer }.Contains(consumerSettings.ConsumerType))
         {
             var channel = CreateChannelForDirect(consumerSettings);
-            return (consumerSettings.ConsumerType == ConsumerType.Default)
-                ? new DefaultConsumer(channel)
-                : new LazyConsumer(channel, name, waiter);
+            if (consumerSettings.ConsumerType == ConsumerType.Default)
+                return new DefaultConsumer(channel);
+            if (consumerSettings.ConsumerType == ConsumerType.Lazy)
+                return new LazyConsumer(channel, name, waiter);
+            if (consumerSettings.ConsumerType == ConsumerType.MessageConsumer)
+                return new MessageConsumer(channel);
         }
 
         throw new ArgumentException(
@@ -66,7 +69,7 @@ public class ConsumerFactory : IConsumerFactory
             true,
             true);
         
-        var result =  returnValue.QueueDeclare(consumerSettings.QueueName, true, true);
+        var result =  returnValue.QueueDeclare(consumerSettings.QueueName, true, false, autoDelete:true);
         var queueName = result.QueueName;
         returnValue.QueueBind(
             queueName,
@@ -88,7 +91,7 @@ public class ConsumerFactory : IConsumerFactory
             true, 
             true);
 
-        var queueName = returnValue.QueueDeclare().QueueName;
+        var queueName = returnValue.QueueDeclare(exclusive: false).QueueName;
         returnValue.QueueBind(
             queueName,
             consumerSettings.ExchangeName,

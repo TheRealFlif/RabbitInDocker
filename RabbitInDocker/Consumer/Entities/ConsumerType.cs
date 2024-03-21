@@ -5,6 +5,7 @@
         Unknown,
         Default,
         Lazy,
-        Subscriber
+        Subscriber,
+        MessageConsumer
     }
 }

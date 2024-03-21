@@ -9,14 +9,15 @@ internal class Program
     static readonly int[] producerNumbers = [1, 2, 3];
     static void Main(string[] args)
     {
-        //MainForDirectVersion1();
-        MainForFanOut();
+        MainForDirectVersion1();
+        //MainForFanOut();
     }
 
     private static void MainForDirectVersion1()
     {
         var factory = new ProducerFactory();
-        var producerSetting = new ProducerSettings(0, 0, "Direct", ProducerType.ReadConsole, "Payments", "payments");
+        //var producerSetting = new ProducerSettings(0, 0, "Direct", ProducerType.ReadConsole, "Payments", "payments");
+        var producerSetting = new ProducerSettings(0, 0, "Direct", ProducerType.ReadConsole, "", "Read console direct");
         var producer = factory.Create(producerSetting) as ReadConsoleProducer
             ?? throw new ApplicationException("Unable to create producer");
 
@@ -25,6 +26,7 @@ internal class Program
         while (readValue != "q")
         {
             producer.Send(readValue);
+            readValue = Console.ReadLine();
         }
 
         producer.Send("q");

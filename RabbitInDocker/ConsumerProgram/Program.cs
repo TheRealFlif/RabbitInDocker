@@ -10,8 +10,9 @@ internal class Program
 
     static void Main(string[] args)
     {
-        MainForFanOut();
-        //MainForDefaultConsumer();
+        MainForDefaultConsumer();
+        
+        //MainForFanOut();
     }
 
     private static void MainForDefaultConsumer()
@@ -19,9 +20,10 @@ internal class Program
         var factory = new ConsumerFactory(ExitMessageReceived);
         var settings = new ConsumerSettings(1, 1000, "letterbox", "DefaultConsumer", 1) { 
             ExchangeName = "Direct",
-            ConsumerType = ConsumerType.Default };
+            ConsumerType = ConsumerType.MessageConsumer
+        };
         var consumer = factory.Create(settings);
-        while (true) ;
+         while (true) ;
     }
 
     private static void MainForFanOut()

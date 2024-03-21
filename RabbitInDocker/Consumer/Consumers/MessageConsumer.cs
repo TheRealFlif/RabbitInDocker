@@ -64,7 +64,7 @@ public class MessageConsumer : IConsumer
             messageObject = Envelope<string>.From(message);
             if ((messageObject?.Data.StartsWith('q')).GetValueOrDefault())
             {
-                returnValue = "q";
+                return "q";
             }
         }
         catch (Exception e)
