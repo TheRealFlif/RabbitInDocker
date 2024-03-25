@@ -35,16 +35,28 @@ public class ConsumerFactory : IConsumerFactory
 
     private IEnumerable<IConsumer> CreateConsumer(ConsumerSettings consumerSettings)
     {
-        if(new[] { ConsumerType.Default, ConsumerType.Lazy, ConsumerType.MessageConsumer }.Contains(consumerSettings.ConsumerType))
+        if(ConsumerType.SimpleConsumer == consumerSettings.ConsumerType)
         {
             var channel = CreateChannelForDirect(consumerSettings);
             return new[] {
-                new SimpleConsumer(channel, consumerSettings),
-                //new SimpleConsumer(channel, consumerSettings),
-                //new SimpleConsumer(channel, consumerSettings),
-                //new SimpleConsumer(channel, consumerSettings)
+                new SimpleConsumer(CreateChannelForDirect(consumerSettings), consumerSettings),
+                //new SimpleConsumer(CreateChannelForDirect(consumerSettings), consumerSettings),
+                //new SimpleConsumer(CreateChannelForDirect(consumerSettings), consumerSettings),
+                //new SimpleConsumer(CreateChannelForDirect(consumerSettings), consumerSettings)
             };
+        }
 
+        if(ConsumerType.SleepingConsumer == consumerSettings.ConsumerType)
+        {
+            var returnValue = new List<IConsumer>
+            {
+                new SleepingConsumer(CreateChannelForDirect(consumerSettings), consumerSettings)
+            };
+            consumerSettings.MinWait = 5000;
+            consumerSettings.MaxWait = 15000;
+            returnValue.Add(new SleepingConsumer(CreateChannelForDirect(consumerSettings), consumerSettings));
+
+            return returnValue;
         }
 
         throw new ArgumentException(

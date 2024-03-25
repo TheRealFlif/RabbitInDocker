@@ -5,14 +5,14 @@ using System.Text;
 
 namespace Consumer.Consumers;
 
-internal class SimpleConsumer : ConsumerBase
+internal class SleepingConsumer : ConsumerBase
 {
-    private static int _totalMessageCount = 0;
-    private int messageCount = 0;
+    private WaitTimeCreator _waitTimeCreator;
 
-    internal SimpleConsumer(IModel channel, ConsumerSettings consumerSettings) : base(channel)
+    internal SleepingConsumer(IModel channel, ConsumerSettings consumerSettings) : base(channel)
     {
         Name = Guid.NewGuid().ToString("N");
+        _waitTimeCreator = new WaitTimeCreator(consumerSettings.MinWait, consumerSettings.MaxWait);
     }
 
     internal override void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)
@@ -20,21 +20,17 @@ internal class SimpleConsumer : ConsumerBase
         var deliveryTag = basicDeliverEventArgs.DeliveryTag;
 
         var body = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray());
-        var message = GetMessage(Name, ++messageCount, body);
-
+        var sleepTime = _waitTimeCreator.GetMilliseconds();
+        var message = GetMessage(Name, body, sleepTime);
         Console.WriteLine(message);
+        Thread.Sleep(sleepTime);
         Channel.BasicAck(deliveryTag, false); //Onödig om det är auto-ack på kanalen
 
         base.Consumer_Received(sender, basicDeliverEventArgs);
     }
 
-    private static object _lock = new();
-    private static string GetMessage(string name, int localCount, string message)
+    private static string GetMessage(string name, string message, int milliseconds)
     {
-        lock (_lock)
-        {
-            _totalMessageCount++;
-            return $"{name.AsSpan(0, 4)}... (#{localCount:00} of {_totalMessageCount:00}): handling {message}";
-        }
+        return $"{name.AsSpan(0, 4)}...: handling {message} and sleeping for {milliseconds}";
     }
 }

@@ -4,9 +4,9 @@ public struct ConsumerSettings
 {
     private ConsumerType _consumerType;
 
-    public int MinWait { get; }
+    public int MinWait { get; set; }
 
-    public int MaxWait { get; }
+    public int MaxWait { get; set; }
 
     public string Name { get; set; }
 
@@ -40,17 +40,5 @@ public struct ConsumerSettings
         RoutingKey = string.Empty;
         Name = name;
         PrefetchCount = prefetchCount;
-    }
-
-    public static ConsumerSettings SubscriberSettings(string name, string exchangeName, string routingKey)
-    {
-        var returnValue = new ConsumerSettings(0, 0, string.Empty, name, 1)
-        {
-            ConsumerType = ConsumerType.Subscriber,
-            ExchangeName = exchangeName ?? string.Empty,
-            RoutingKey = routingKey ?? string.Empty
-        };
-
-        return returnValue;
     }
 }

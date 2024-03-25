@@ -11,14 +11,15 @@ public class ProducerFactory
     private static IConnection _connection;
 
     public IEnumerable<IProducer> Create(ProducerSettings settings)
+
     {
         if (settings.TypeOfExchange == ProducerType.SimpleProducer)
         {
             return new[]{
                 new SimpleProducer(CreateChannel(settings), settings),
-                //new SimpleProducer(CreateChannel(settings), settings),
-                //new SimpleProducer(CreateChannel(settings), settings),
-                //new SimpleProducer(CreateChannel(settings), settings)
+                new SimpleProducer(CreateChannel(settings), settings),
+                new SimpleProducer(CreateChannel(settings), settings),
+                new SimpleProducer(CreateChannel(settings), settings)
             };
         }
 

@@ -3,9 +3,7 @@
     public enum ConsumerType
     {
         Unknown,
-        Default,
-        Lazy,
-        Subscriber,
-        MessageConsumer
+        SimpleConsumer,
+        SleepingConsumer
     }
 }
