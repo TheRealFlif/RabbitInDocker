@@ -12,7 +12,7 @@ internal class SimpleConsumer : ConsumerBase
 
     internal SimpleConsumer(IModel channel, ConsumerSettings consumerSettings) : base(channel)
     {
-        Name = consumerSettings.Name;
+        Name = Guid.NewGuid().ToString("N");
     }
 
     internal override void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)
@@ -34,7 +34,7 @@ internal class SimpleConsumer : ConsumerBase
         lock (_lock)
         {
             _totalMessageCount++;
-            return $"{name} (#{localCount:00} of {_totalMessageCount:00}): handling {message}";
+            return $"{name.AsSpan(0, 4)}... (#{localCount:00} of {_totalMessageCount:00}): handling {message}";
         }
     }
 }

@@ -6,32 +6,45 @@ namespace Consumer;
 
 public class ConsumerFactory : IConsumerFactory
 {
-    readonly ConnectionFactory _factory;
-    readonly Dictionary<string, int> _consumerCounter = [];
+    private readonly static ConnectionFactory _factory = new ConnectionFactory { HostName = "localhost" };
+    private static IConnection _connection;
 
-    readonly EventHandler _exitMessageReceived;
+    private readonly EventHandler _exitMessageReceived;
 
     public ConsumerFactory(EventHandler exitMessageReceived)
     {
         _exitMessageReceived = exitMessageReceived;
-        _factory = new ConnectionFactory { HostName = "localhost" };
     }
 
-    public IConsumer Create(ConsumerSettings consumerSettings)
+    public IEnumerable<IConsumer> Create(ConsumerSettings consumerSettings)
     {
         var returnValue = CreateConsumer(consumerSettings);
 
-        returnValue.ExitMessageReceived += _exitMessageReceived;
-
+        foreach(var consumer in returnValue)
+        {
+            consumer.ExitMessageReceived += _exitMessageReceived;
+        }
+        
         return returnValue;
     }
 
-    private IConsumer CreateConsumer(ConsumerSettings consumerSettings)
+    private void ConsumerFactory_ExitMessageReceived(object? sender, EventArgs e)
+    {
+        throw new NotImplementedException();
+    }
+
+    private IEnumerable<IConsumer> CreateConsumer(ConsumerSettings consumerSettings)
     {
         if(new[] { ConsumerType.Default, ConsumerType.Lazy, ConsumerType.MessageConsumer }.Contains(consumerSettings.ConsumerType))
         {
             var channel = CreateChannelForDirect(consumerSettings);
-            return new SimpleConsumer(channel, consumerSettings);
+            return new[] {
+                new SimpleConsumer(channel, consumerSettings),
+                //new SimpleConsumer(channel, consumerSettings),
+                //new SimpleConsumer(channel, consumerSettings),
+                //new SimpleConsumer(channel, consumerSettings)
+            };
+
         }
 
         throw new ArgumentException(
@@ -41,9 +54,7 @@ public class ConsumerFactory : IConsumerFactory
 
     private IModel CreateChannelForDirect(ConsumerSettings consumerSettings)
     {
-        var returnValue = _factory
-            .CreateConnection()
-            .CreateModel();
+        var returnValue = Connection.CreateModel();
         
         var result =  returnValue.QueueDeclare(
             queue: consumerSettings.QueueName, 
@@ -59,14 +70,24 @@ public class ConsumerFactory : IConsumerFactory
         return returnValue;
     }
 
-    private string CreateConsumerName(string queueName)
+    private static object _lock = new();
+    private static IConnection Connection
     {
-        if (_consumerCounter.TryGetValue(queueName, out var counter))
+        get
         {
-            _consumerCounter.Remove(queueName);
-        }
-        _consumerCounter.Add(queueName, ++counter);
+            if (_connection == null)
+            {
+                lock(_lock)
+                {
+                    if(_connection == null)
+                    {
+                        _connection = _factory.CreateConnection();
+                    }
+                }
+            }
 
-        return $"{queueName}_{counter}";
+            return _connection;
+        }
+        
     }
 }

@@ -34,7 +34,7 @@ internal abstract class ConsumerBase : IConsumer
     {
         var json = Encoding.UTF8.GetString(basicDeliverEventArgs.Body.ToArray());
         var envelope = Envelope<string>.From(json) ?? new Envelope<string>("q");
-        if (envelope.Data.StartsWith('q'))
+        if (string.Compare(envelope.Data, "q", StringComparison.InvariantCultureIgnoreCase) == 0)
         {
             ExitMessageReceived?.Invoke(this, new EventArgs());
         }

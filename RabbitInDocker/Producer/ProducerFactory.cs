@@ -7,23 +7,18 @@ using System.ComponentModel.Design;
 
 public class ProducerFactory
 {
-    private readonly ConnectionFactory _factory;
-    public ProducerFactory()
-    {
-        _factory = new ConnectionFactory { HostName = "localhost" };
-    }
+    private static readonly ConnectionFactory _factory = new ConnectionFactory { HostName = "localhost" };
+    private static IConnection _connection;
 
     public IEnumerable<IProducer> Create(ProducerSettings settings)
     {
-        var channel = CreateChannel(settings);
-
         if (settings.TypeOfExchange == ProducerType.SimpleProducer)
         {
             return new[]{
-                new SimpleProducer(channel, settings),
-                new SimpleProducer(channel, settings),
-                new SimpleProducer(channel, settings),
-                new SimpleProducer(channel, settings)
+                new SimpleProducer(CreateChannel(settings), settings),
+                //new SimpleProducer(CreateChannel(settings), settings),
+                //new SimpleProducer(CreateChannel(settings), settings),
+                //new SimpleProducer(CreateChannel(settings), settings)
             };
         }
 
@@ -32,26 +27,36 @@ public class ProducerFactory
 
     private IModel CreateChannel(ProducerSettings producerSettings)
     {
-        if (producerSettings.TypeOfExchange == ProducerType.Unknown ||
-            !Enum.IsDefined(producerSettings.TypeOfExchange))
-        {
-            throw new ArgumentException($"Wrong TypeOfExchange '{producerSettings.TypeOfExchange}'", nameof(producerSettings));
-        }
-
-        //if (producerSettings.TypeOfExchange == ProducerType.FanOut)
-        //    return CreateChannelForFanOut(producerSettings);
-
         if (producerSettings.TypeOfExchange == ProducerType.SimpleProducer)
             return CreateChannelForDirect(producerSettings);
 
         throw new NotImplementedException($"Method not implemented for '{producerSettings.TypeOfExchange}'");
     }
 
+    private static object _lock = new();
+    private static IConnection Connection
+    {
+        get
+        {
+            if (_connection == null)
+            {
+                lock(_lock)
+                {
+                    if (_connection == null)
+                    {
+                        _connection = _factory.CreateConnection();
+                    }
+                }
+            }
+
+            return _connection;
+        }
+
+    }
+
     private IModel CreateChannelForDirect(ProducerSettings producerSettings)
     {
-        var returnValue = _factory
-            .CreateConnection()
-            .CreateModel();
+        var returnValue = Connection.CreateModel();
 
         returnValue.ExchangeDeclare(
             producerSettings.ExchangeName,
@@ -67,9 +72,7 @@ public class ProducerFactory
 
     private IModel CreateChannelForFanOut(ProducerSettings producerSettings)
     {
-        var returnValue = _factory
-            .CreateConnection()
-            .CreateModel();
+        var returnValue = _connection.CreateModel();
         returnValue.ExchangeDeclare(
             producerSettings.ExchangeName,
             ExchangeType.Fanout,

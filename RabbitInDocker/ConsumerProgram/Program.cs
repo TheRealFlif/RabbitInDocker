@@ -21,28 +21,13 @@ internal class Program
             ConsumerType = ConsumerType.MessageConsumer
         };
         Console.WriteLine("Starting consumers");
-        var consumer = factory.Create(settings);
-        Console.WriteLine($"Consumer '{consumer.Name}' created and is listing to queue '{consumer.QueueName}'.");
+        var consumers = factory.Create(settings);
+        foreach (var consumer in consumers)
+        {
+            Console.WriteLine($"Consumer '{consumer.Name}' created and is listing to queue '{consumer.QueueName}'.");
+        }
          while (true) ;
     }
-
-    //private static void MainForFanOut()
-    //{
-    //    var factory = new ConsumerFactory(ExitMessageReceived);
-    //    var loggerSettings = ConsumerSettings.SubscriberSettings("Logger", "Pubsub", "");
-
-    //    var consumers = new System.Collections.Concurrent.BlockingCollection<IConsumer>();
-    //    consumers.Add(factory.Create(loggerSettings));
-
-    //    var queueNames = new[] { "letterbox1", "letterbox2", "letterbox3" };
-    //    queueNames
-    //        .Select(n => ConsumerSettings.SubscriberSettings(n, "Pubsub", string.Empty))
-    //        .ToList()
-    //        .ForEach(cs => consumers.Add(factory.Create(cs)));
-
-    //    var running = true;
-    //    while (running) ;
-    //}
 
     private static void ExitMessageReceived(object? sender, EventArgs e)
     {

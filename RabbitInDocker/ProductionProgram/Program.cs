@@ -17,10 +17,13 @@ internal class Program
     private static void MainForDirectVersion1()
     {
         var producerSetting = new ProducerSettings(0, 0, "Direct", ProducerType.SimpleProducer, "", "Read console direct");
+        Console.WriteLine("Starting creating producers");
         var producers = factory.Create(producerSetting)
             ?? throw new ApplicationException("Unable to create producer");
-        
-        Console.WriteLine("Write next messages to send (q to exit)");
+        foreach(var producer in producers)
+        {
+            Console.WriteLine($"Created producer '{producer.Name}' sending messages to exchange '{producerSetting.ExchangeName}'.");
+        }
         
         while (_consoleReader.Read(out var message))
         {

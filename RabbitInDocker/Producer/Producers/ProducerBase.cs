@@ -7,7 +7,7 @@ namespace Producer.Producers;
 public abstract class ProducerBase<T> : IProducer, IDisposable
 {
     private int _messageNumber = 0;
-    internal string Name { get; }
+    public string Name { get; }
     protected WaitTimeCreator WaitTimeCreator { get; set; }
     private LatinWordCreator _latinWordCreator = new LatinWordCreator();
     protected IModel Channel { get; init; }
@@ -19,7 +19,7 @@ public abstract class ProducerBase<T> : IProducer, IDisposable
     {
         Channel = channel;
         Settings = settings;
-        Name = _latinWordCreator.CreateCombination(2, ' ');
+        Name = _latinWordCreator.CreateCombination(1, ' ');
     }
 
     public virtual void Send(string data)
