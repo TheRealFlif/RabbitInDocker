@@ -4,6 +4,7 @@
     {
         Unknown,
         SimpleProducer,
-        FanOut
+        FanOut,
+        RoutingKey
     }
 }

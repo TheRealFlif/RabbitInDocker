@@ -5,6 +5,7 @@
         Unknown,
         SimpleConsumer,
         SleepingConsumer,
-        Subscriber
+        Subscriber,
+        Routing
     }
 }

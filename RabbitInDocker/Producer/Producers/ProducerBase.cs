@@ -11,7 +11,7 @@ public abstract class ProducerBase<T> : IProducer, IDisposable
     protected WaitTimeCreator WaitTimeCreator { get; set; }
     private LatinWordCreator _latinWordCreator = new LatinWordCreator();
     protected IModel Channel { get; init; }
-    protected ProducerSettings Settings { get; init; }
+    public ProducerSettings Settings { get; init; }
 
     public ProducerBase(
         IModel channel,

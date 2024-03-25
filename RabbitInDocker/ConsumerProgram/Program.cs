@@ -13,7 +13,8 @@ internal class Program
         Thread.Sleep(4000);
         //MainForSimpleConsumer();
         //MainForSleepingConsumer();
-        MainForSubscriberConsumers();
+        //MainForSubscriberConsumers();
+        MainForRoutingConsumer();
     }
 
     private static void MainForSimpleConsumer()
@@ -56,6 +57,23 @@ internal class Program
         {
             ExchangeName = "PubSub",
             ConsumerType = ConsumerType.Subscriber,
+        };
+        Console.WriteLine("Starting consumers");
+        var consumers = factory.Create(settings);
+        foreach (var consumer in consumers)
+        {
+            Console.WriteLine($"Consumer '{consumer.Name}' created and is listing to queue '{consumer.QueueName}'.");
+        }
+        while (true) ;
+    }
+
+    private static void MainForRoutingConsumer()
+    {
+        var factory = new ConsumerFactory(ExitMessageReceived);
+        var settings = new ConsumerSettings(1, 1000, "", "SimpleConsumer", 1)
+        {
+            ExchangeName = "Routing",
+            ConsumerType = ConsumerType.Routing
         };
         Console.WriteLine("Starting consumers");
         var consumers = factory.Create(settings);

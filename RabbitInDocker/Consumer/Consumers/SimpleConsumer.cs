@@ -34,7 +34,8 @@ internal class SimpleConsumer : ConsumerBase
         lock (_lock)
         {
             _totalMessageCount++;
-            return $"{name.AsSpan(0, 4)}... (#{localCount:00} of {_totalMessageCount:00}): handling {message}";
+            var displayName = name.Length < 7 ? name : $"{name.AsSpan(0, 4)}...";
+            return $"{displayName} (#{localCount:00} of {_totalMessageCount:00}): handling {message}";
         }
     }
 }

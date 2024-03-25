@@ -20,11 +20,11 @@ public class ConsumerFactory : IConsumerFactory
     {
         var returnValue = CreateConsumers(consumerSettings);
 
-        foreach(var consumer in returnValue)
+        foreach (var consumer in returnValue)
         {
             consumer.ExitMessageReceived += _exitMessageReceived;
         }
-        
+
         return returnValue;
     }
 
@@ -35,30 +35,35 @@ public class ConsumerFactory : IConsumerFactory
 
     private IEnumerable<IConsumer> CreateConsumers(ConsumerSettings consumerSettings)
     {
-        if(ConsumerType.SimpleConsumer == consumerSettings.ConsumerType)
+        if (ConsumerType.SimpleConsumer == consumerSettings.ConsumerType)
         {
             return CreateDirectConsumers(1, consumerSettings);
         }
 
-        if(ConsumerType.SleepingConsumer == consumerSettings.ConsumerType)
+        if (ConsumerType.SleepingConsumer == consumerSettings.ConsumerType)
         {
             return CreateSleepingConsumers(consumerSettings);
         }
 
-        if(ConsumerType.Subscriber == consumerSettings.ConsumerType)
+        if (ConsumerType.Subscriber == consumerSettings.ConsumerType)
         {
             return CreateSubscriberConsumers(4, consumerSettings);
         }
 
+        if (ConsumerType.Routing == consumerSettings.ConsumerType)
+        {
+            return CreateRoutingKeyConsumers(4, consumerSettings);
+        }
+
         throw new ArgumentException(
-            $"Unable to create consumer of type '{consumerSettings.ConsumerType}'", 
+            $"Unable to create consumer of type '{consumerSettings.ConsumerType}'",
             nameof(consumerSettings));
     }
 
     private static IEnumerable<IConsumer> CreateDirectConsumers(int numberOfConsumers, ConsumerSettings consumerSettings)
     {
         var returnValue = new List<IConsumer>();
-        for(var i = 0; i<numberOfConsumers; i++)
+        for (var i = 0; i < numberOfConsumers; i++)
         {
             returnValue.Add(new SimpleConsumer(CreateChannelForDirect(consumerSettings), consumerSettings));
         }
@@ -99,14 +104,28 @@ public class ConsumerFactory : IConsumerFactory
         return returnValue;
     }
 
+    private static IEnumerable<IConsumer> CreateRoutingKeyConsumers(int numberOfConsumers, ConsumerSettings consumerSettings)
+    {
+        string[] routingKeys = ["europe", "payment", "america", ""];
+        var returnValue = new List<IConsumer>();
+        for (var i = 0; i < numberOfConsumers; i++)
+        {
+            var routingKey = routingKeys[i % routingKeys.Length];
+            var channel = CreateChannelForRouting(consumerSettings, routingKey);
+            returnValue.Add(new SimpleConsumer(channel, consumerSettings, routingKey));
+        }
+
+        return returnValue;
+    }
+
     private static IModel CreateChannelForDirect(ConsumerSettings consumerSettings)
     {
         var returnValue = Connection.CreateModel();
-        
-        var result =  returnValue.QueueDeclare(
-            queue: consumerSettings.QueueName, 
-            durable: true, 
-            exclusive: false, 
+
+        var result = returnValue.QueueDeclare(
+            queue: consumerSettings.QueueName,
+            durable: true,
+            exclusive: false,
             autoDelete: true);
 
         returnValue.QueueBind(
@@ -127,7 +146,7 @@ public class ConsumerFactory : IConsumerFactory
             exclusive: false,
             autoDelete: false);
 
-        var prefetch = maxWaitTime/consumerSettings.MaxWait;
+        var prefetch = maxWaitTime / consumerSettings.MaxWait;
         returnValue.BasicQos(0, (ushort)prefetch, false); //remove this line to use round robin
 
         returnValue.QueueBind(
@@ -156,6 +175,25 @@ public class ConsumerFactory : IConsumerFactory
         return returnValue;
     }
 
+
+    private static IModel CreateChannelForRouting(ConsumerSettings consumerSettings, string routingKey)
+    {
+        var returnValue = Connection.CreateModel();
+
+        var result = returnValue.QueueDeclare(
+            queue: !string.IsNullOrEmpty(routingKey) ? routingKey : "analytics",
+            durable: true,
+            exclusive: false,
+            autoDelete: true);
+
+        returnValue.QueueBind(
+            result.QueueName,
+            consumerSettings.ExchangeName,
+            routingKey);
+
+        return returnValue;
+    }
+
     private static object _lock = new();
     private static IConnection Connection
     {
@@ -163,9 +201,9 @@ public class ConsumerFactory : IConsumerFactory
         {
             if (_connection == null)
             {
-                lock(_lock)
+                lock (_lock)
                 {
-                    if(_connection == null)
+                    if (_connection == null)
                     {
                         _connection = _factory.CreateConnection();
                     }
@@ -174,6 +212,6 @@ public class ConsumerFactory : IConsumerFactory
 
             return _connection;
         }
-        
+
     }
 }

@@ -18,16 +18,26 @@ public class ProducerFactory
             return CreateProducers(1, settings);
         }
 
+        if (ProducerType.RoutingKey == settings.TypeOfExchange)
+        {
+            return CreateProducers(4, settings, ["europe", "payment", "america", ""]);
+        }
+
         throw new NotImplementedException($"Cannot create a producer of type '{settings.TypeOfExchange}'");
     }
 
-    private IEnumerable<IProducer> CreateProducers(int numberOfProducers, ProducerSettings settings)
+    private IEnumerable<IProducer> CreateProducers(int numberOfProducers, ProducerSettings settings, string[] routingKeys = null)
     {
+        var newSettings = settings;
         var returnValue = new List<IProducer>();
         for (int i = 0; i < numberOfProducers; i++)
         {
-            var channel = CreateChannel(settings);
-            returnValue.Add(new SimpleProducer(channel, settings));
+            if(routingKeys != null)
+            {
+                newSettings = newSettings.ChangeRoutingKey(routingKeys[i % routingKeys.Length]);
+            }
+            var channel = CreateChannel(newSettings);
+            returnValue.Add(new SimpleProducer(channel, newSettings));
         }
         return returnValue;
     }
@@ -39,6 +49,10 @@ public class ProducerFactory
 
         if (producerSettings.TypeOfExchange == ProducerType.FanOut)
             return CreateChannelForFanOut(producerSettings);
+
+        if (producerSettings.TypeOfExchange == ProducerType.RoutingKey)
+            return CreateChannelForDirect(producerSettings);
+
 
         throw new NotImplementedException($"Method not implemented for '{producerSettings.TypeOfExchange}'");
     }
@@ -104,6 +118,22 @@ public class ProducerFactory
             ExchangeType.Fanout,
             true,
             true);
+
+        return returnValue;
+    }
+
+    private IModel CreateChannelForRoutingKey(ProducerSettings producerSettings, string[] routingKeys)
+    {
+        var returnValue = Connection.CreateModel();
+
+        returnValue.ExchangeDeclare(
+            producerSettings.ExchangeName,
+            ExchangeType.Direct,
+            true,
+            true);
+
+        //var queueName = returnValue.QueueDeclare(durable: true, exclusive: false, autoDelete: false).QueueName;
+        //returnValue.QueueBind(queueName, producerSettings.ExchangeName, producerSettings.RoutingKey, null);
 
         return returnValue;
     }

@@ -10,4 +10,14 @@ public class SimpleProducer : ProducerBase<string>
     /// 
     /// </summary>
     public SimpleProducer(IModel channel, ProducerSettings settings) : base(channel, settings) { }
+
+    public override void Send(string data)
+    {
+        var routingKey = Settings.RoutingKey;
+        var newData = string.IsNullOrEmpty(routingKey) || string.Compare(data, "q", StringComparison.InvariantCultureIgnoreCase) == 0
+            ? data
+            : $"{routingKey}: {data}";
+        base.Send(newData);
+
+    }
 }
