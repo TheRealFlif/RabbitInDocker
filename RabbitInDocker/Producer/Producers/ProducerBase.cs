@@ -4,76 +4,76 @@ using RabbitMQ.Client;
 
 namespace Producer.Producers;
 
-public class ProducerBase<T> : IProducer, IDisposable
+public abstract class ProducerBase<T> : IProducer, IDisposable
 {
+    private int _messageNumber = 0;
+    internal string Name { get; }
+    protected WaitTimeCreator WaitTimeCreator { get; set; }
+    private LatinWordCreator _latinWordCreator = new LatinWordCreator();
     protected IModel Channel { get; init; }
     protected ProducerSettings Settings { get; init; }
 
     public ProducerBase(
-        IModel channel, 
+        IModel channel,
         ProducerSettings settings)
     {
         Channel = channel;
         Settings = settings;
-        if (_waitTimeCreator == null)
-        {
-            _waitTimeCreator = new WaitTimeCreator(settings.MinWait, settings.MaxWait);
-        }
+        Name = _latinWordCreator.CreateCombination(2, ' ');
     }
-            
-    public virtual void Send(T? body)
+
+    public virtual void Send(string data)
     {
-        var envelope = Create(body);
+        var envelope = Create(data);
+        var body = System.Text.Encoding.UTF8.GetBytes(envelope.To());
         if (envelope != null)
         {
             Channel.BasicPublish(
-                Settings.ExchangeName, 
-                Settings.RoutingKey, 
-                null, 
-                System.Text.Encoding.UTF8.GetBytes(envelope.To()));
+                Settings.ExchangeName,
+                Settings.RoutingKey,
+                null,
+                body);
         }
         Sleep();
     }
 
-    private int _messageNumber = 0;
-    protected virtual Envelope<T>? Create(T? body)
+    protected virtual Envelope<string>? Create(string data)
     {
-        Envelope<T>? returnValue = default;
-        if (body != null)
-        {
-            returnValue = new Envelope<T>(body);
-            returnValue["sender"] = Settings.Name;
-            returnValue["messageNumber"] = $"{++_messageNumber:00}";
-        }
+        var newData = data ?? string.Empty;
+
+        var returnValue = new Envelope<string>(newData);
+        returnValue["sender"] = Name;
+        returnValue["messageNumber"] = $"{++_messageNumber:00}";
+
         return returnValue;
     }
 
     public virtual void ShutDown() { }
 
-    static WaitTimeCreator _waitTimeCreator;
-    private bool _disposedValue;
-
     protected void Sleep()
     {
-        Thread.Sleep(_waitTimeCreator.GetMilliseconds());
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
+        if (WaitTimeCreator != null)
         {
-            if (disposing)
-            {
-                Channel.Dispose();
-            }
-
-            _disposedValue = true;
+            Thread.Sleep(WaitTimeCreator.GetMilliseconds());
         }
     }
 
+    private bool _disposedValue;
+    protected virtual void Dispose(bool disposing)
+    {
+        //if (!_disposedValue)
+        //{
+        //    if (disposing)
+        //    {
+        //        Channel.Dispose();
+        //    }
+
+        //    _disposedValue = true;
+        //}
+    }
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        //Dispose(disposing: true);
+        //GC.SuppressFinalize(this);
     }
 }

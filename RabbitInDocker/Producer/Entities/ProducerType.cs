@@ -3,7 +3,7 @@
     public enum ProducerType
     {
         Unknown,
-        ReadConsole,
+        SimpleProducer,
         FanOut
     }
 }

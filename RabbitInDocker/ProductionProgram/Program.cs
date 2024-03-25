@@ -3,9 +3,12 @@
 using Producer;
 using Producer.Entities;
 using Producer.Producers;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 internal class Program
 {
+    static ProducerFactory factory = new ProducerFactory();
+    static ConsoleReader _consoleReader = new();
     static readonly int[] producerNumbers = [1, 2, 3];
     static void Main(string[] args)
     {
@@ -15,23 +18,23 @@ internal class Program
 
     private static void MainForDirectVersion1()
     {
-        var factory = new ProducerFactory();
-        //var producerSetting = new ProducerSettings(0, 0, "Direct", ProducerType.ReadConsole, "Payments", "payments");
-        var producerSetting = new ProducerSettings(0, 0, "Direct", ProducerType.ReadConsole, "", "Read console direct");
-        var producer = factory.Create(producerSetting) as ReadConsoleProducer
+        var producerSetting = new ProducerSettings(0, 0, "Direct", ProducerType.SimpleProducer, "", "Read console direct");
+        var producers = factory.Create(producerSetting)
             ?? throw new ApplicationException("Unable to create producer");
-
+        
         Console.WriteLine("Write next messages to send (q to exit)");
-        var readValue = Console.ReadLine();
-        while (readValue != "q")
+        
+        while (_consoleReader.Read(out var message))
         {
-            producer.Send(readValue);
-            readValue = Console.ReadLine();
+            var actions = producers
+                .Select<IProducer, Action>(p => () => p.Send(message))
+                .ToArray();
+
+            Parallel.Invoke(actions);
         }
 
-        producer.Send("q");
+        producers.First().Send("q");
         Console.WriteLine("Shutting down");
-        producer.ShutDown();
         Console.ReadLine();
     }
 
@@ -86,4 +89,14 @@ internal class Program
         producers?.First()?.ShutDown();
         Console.ReadLine();
     }
+}
+
+internal class ConsoleReader
+{
+    internal bool Read(out string message)
+    {
+        message = Console.ReadLine() ?? "q";
+        return string.Compare(message, "q", StringComparison.InvariantCultureIgnoreCase) != 0; 
+    }
+
 }

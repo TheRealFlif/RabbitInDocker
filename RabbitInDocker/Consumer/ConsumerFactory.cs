@@ -33,23 +33,24 @@ public class ConsumerFactory : IConsumerFactory
             : consumerSettings.Name;
         var waiter = new WaitTimeCreator(consumerSettings.MinWait, consumerSettings.MaxWait);
         
-        if (consumerSettings.ConsumerType == ConsumerType.Subscriber)
-        {
-            var channel = CreateChannelForFanOut(consumerSettings);
-            return new Subscriber(
-                channel,
-                name,
-                waiter);
-        }
+        //if (consumerSettings.ConsumerType == ConsumerType.Subscriber)
+        //{
+        //    var channel = CreateChannelForFanOut(consumerSettings);
+        //    return new Subscriber(
+        //        channel,
+        //        name,
+        //        waiter);
+        //}
         if(new[] { ConsumerType.Default, ConsumerType.Lazy, ConsumerType.MessageConsumer }.Contains(consumerSettings.ConsumerType))
         {
             var channel = CreateChannelForDirect(consumerSettings);
-            if (consumerSettings.ConsumerType == ConsumerType.Default)
-                return new DefaultConsumer(channel);
-            if (consumerSettings.ConsumerType == ConsumerType.Lazy)
-                return new LazyConsumer(channel, name, waiter);
-            if (consumerSettings.ConsumerType == ConsumerType.MessageConsumer)
-                return new MessageConsumer(channel);
+            return new SimpleConsumer(channel, consumerSettings);
+            //if (consumerSettings.ConsumerType == ConsumerType.Default)
+            //    return new DefaultConsumer(channel);
+            //if (consumerSettings.ConsumerType == ConsumerType.Lazy)
+            //    return new LazyConsumer(channel, name, waiter);
+            //if (consumerSettings.ConsumerType == ConsumerType.MessageConsumer)
+            //    return new MessageConsumer(channel);
         }
 
         throw new ArgumentException(
@@ -62,12 +63,12 @@ public class ConsumerFactory : IConsumerFactory
         var returnValue = _factory
             .CreateConnection()
             .CreateModel();
-        returnValue.BasicQos(0, consumerSettings.PrefetchCount, false);
-        returnValue.ExchangeDeclare(
-            consumerSettings.ExchangeName,
-            ExchangeType.Direct,
-            true,
-            true);
+        //returnValue.BasicQos(0, consumerSettings.PrefetchCount, false);
+        //returnValue.ExchangeDeclare(
+        //    consumerSettings.ExchangeName,
+        //    ExchangeType.Direct,
+        //    true,
+        //    true);
         
         var result =  returnValue.QueueDeclare(consumerSettings.QueueName, true, false, autoDelete:true);
         var queueName = result.QueueName;

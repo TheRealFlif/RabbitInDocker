@@ -10,19 +10,21 @@ internal class Program
 
     static void Main(string[] args)
     {
-        MainForDefaultConsumer();
+        MainForSimpleConsumer();
         
         //MainForFanOut();
     }
 
-    private static void MainForDefaultConsumer()
+    private static void MainForSimpleConsumer()
     {
         var factory = new ConsumerFactory(ExitMessageReceived);
-        var settings = new ConsumerSettings(1, 1000, "letterbox", "DefaultConsumer", 1) { 
+        var settings = new ConsumerSettings(1, 1000, "directQueue", "SimpleConsumer", 1) { 
             ExchangeName = "Direct",
             ConsumerType = ConsumerType.MessageConsumer
         };
+        Console.WriteLine("Starting consumers");
         var consumer = factory.Create(settings);
+        Console.WriteLine($"Consumer '{consumer.Name}' created and is listing to queue '{consumer.QueueName}'.");
          while (true) ;
     }
 
