@@ -16,12 +16,6 @@ public class ProducerFactory
     public IEnumerable<IProducer> Create(ProducerSettings settings)
     {
         var channel = CreateChannel(settings);
-        if (settings.TypeOfExchange == ProducerType.FanOut)
-        {
-            return new[]{ new FanoutProducer(
-            channel,
-            settings)};
-        }
 
         if (settings.TypeOfExchange == ProducerType.SimpleProducer)
         {
@@ -44,8 +38,8 @@ public class ProducerFactory
             throw new ArgumentException($"Wrong TypeOfExchange '{producerSettings.TypeOfExchange}'", nameof(producerSettings));
         }
 
-        if (producerSettings.TypeOfExchange == ProducerType.FanOut)
-            return CreateChannelForFanOut(producerSettings);
+        //if (producerSettings.TypeOfExchange == ProducerType.FanOut)
+        //    return CreateChannelForFanOut(producerSettings);
 
         if (producerSettings.TypeOfExchange == ProducerType.SimpleProducer)
             return CreateChannelForDirect(producerSettings);
@@ -65,8 +59,8 @@ public class ProducerFactory
             true,
             true);
 
-        var queueName = returnValue.QueueDeclare(durable: true, exclusive: false, autoDelete: false).QueueName;
-        returnValue.QueueBind(queueName, producerSettings.ExchangeName, producerSettings.RoutingKey, null);
+        //var queueName = returnValue.QueueDeclare(durable: true, exclusive: false, autoDelete: false).QueueName;
+        //returnValue.QueueBind(queueName, producerSettings.ExchangeName, producerSettings.RoutingKey, null);
 
         return returnValue;
     }

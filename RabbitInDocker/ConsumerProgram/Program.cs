@@ -11,8 +11,6 @@ internal class Program
     static void Main(string[] args)
     {
         MainForSimpleConsumer();
-        
-        //MainForFanOut();
     }
 
     private static void MainForSimpleConsumer()
@@ -28,23 +26,23 @@ internal class Program
          while (true) ;
     }
 
-    private static void MainForFanOut()
-    {
-        var factory = new ConsumerFactory(ExitMessageReceived);
-        var loggerSettings = ConsumerSettings.SubscriberSettings("Logger", "Pubsub", "");
+    //private static void MainForFanOut()
+    //{
+    //    var factory = new ConsumerFactory(ExitMessageReceived);
+    //    var loggerSettings = ConsumerSettings.SubscriberSettings("Logger", "Pubsub", "");
 
-        var consumers = new System.Collections.Concurrent.BlockingCollection<IConsumer>();
-        consumers.Add(factory.Create(loggerSettings));
+    //    var consumers = new System.Collections.Concurrent.BlockingCollection<IConsumer>();
+    //    consumers.Add(factory.Create(loggerSettings));
 
-        var queueNames = new[] { "letterbox1", "letterbox2", "letterbox3" };
-        queueNames
-            .Select(n => ConsumerSettings.SubscriberSettings(n, "Pubsub", string.Empty))
-            .ToList()
-            .ForEach(cs => consumers.Add(factory.Create(cs)));
+    //    var queueNames = new[] { "letterbox1", "letterbox2", "letterbox3" };
+    //    queueNames
+    //        .Select(n => ConsumerSettings.SubscriberSettings(n, "Pubsub", string.Empty))
+    //        .ToList()
+    //        .ForEach(cs => consumers.Add(factory.Create(cs)));
 
-        var running = true;
-        while (running) ;
-    }
+    //    var running = true;
+    //    while (running) ;
+    //}
 
     private static void ExitMessageReceived(object? sender, EventArgs e)
     {
