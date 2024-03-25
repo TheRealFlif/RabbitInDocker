@@ -5,6 +5,7 @@
         Unknown,
         SimpleProducer,
         FanOut,
-        RoutingKey
+        RoutingKey,
+        Topic
     }
 }

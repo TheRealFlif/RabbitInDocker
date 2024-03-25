@@ -23,6 +23,11 @@ public class ProducerFactory
             return CreateProducers(4, settings, ["europe", "payment", "america", ""]);
         }
 
+        if (ProducerType.Topic == settings.TypeOfExchange)
+        {
+            return CreateProducers(3, settings, ["europe.payment", "america.payment", "notConsumed"]);
+        }
+
         throw new NotImplementedException($"Cannot create a producer of type '{settings.TypeOfExchange}'");
     }
 
@@ -53,6 +58,8 @@ public class ProducerFactory
         if (producerSettings.TypeOfExchange == ProducerType.RoutingKey)
             return CreateChannelForDirect(producerSettings);
 
+        if (producerSettings.TypeOfExchange == ProducerType.Topic)
+            return CreateChannelForTopic(producerSettings);
 
         throw new NotImplementedException($"Method not implemented for '{producerSettings.TypeOfExchange}'");
     }
@@ -85,6 +92,22 @@ public class ProducerFactory
         returnValue.ExchangeDeclare(
             producerSettings.ExchangeName,
             ExchangeType.Direct,
+            true,
+            true);
+
+        //var queueName = returnValue.QueueDeclare(durable: true, exclusive: false, autoDelete: false).QueueName;
+        //returnValue.QueueBind(queueName, producerSettings.ExchangeName, producerSettings.RoutingKey, null);
+
+        return returnValue;
+    }
+
+    private IModel CreateChannelForTopic(ProducerSettings producerSettings)
+    {
+        var returnValue = Connection.CreateModel();
+
+        returnValue.ExchangeDeclare(
+            producerSettings.ExchangeName,
+            ExchangeType.Topic,
             true,
             true);
 

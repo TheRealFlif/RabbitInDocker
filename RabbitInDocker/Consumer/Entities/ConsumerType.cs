@@ -6,6 +6,7 @@
         SimpleConsumer,
         SleepingConsumer,
         Subscriber,
-        Routing
+        Routing,
+        Topic
     }
 }

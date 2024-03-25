@@ -55,6 +55,12 @@ public class ConsumerFactory : IConsumerFactory
             return CreateRoutingKeyConsumers(4, consumerSettings);
         }
 
+        if (ConsumerType.Topic == consumerSettings.ConsumerType)
+        {
+            return CreateTopicConsumers(4, consumerSettings);
+        }
+        
+
         throw new ArgumentException(
             $"Unable to create consumer of type '{consumerSettings.ConsumerType}'",
             nameof(consumerSettings));
@@ -107,6 +113,20 @@ public class ConsumerFactory : IConsumerFactory
     private static IEnumerable<IConsumer> CreateRoutingKeyConsumers(int numberOfConsumers, ConsumerSettings consumerSettings)
     {
         string[] routingKeys = ["europe", "payment", "america", ""];
+        var returnValue = new List<IConsumer>();
+        for (var i = 0; i < numberOfConsumers; i++)
+        {
+            var routingKey = routingKeys[i % routingKeys.Length];
+            var channel = CreateChannelForRouting(consumerSettings, routingKey);
+            returnValue.Add(new SimpleConsumer(channel, consumerSettings, routingKey));
+        }
+
+        return returnValue;
+    }
+
+    private static IEnumerable<IConsumer> CreateTopicConsumers(int numberOfConsumers, ConsumerSettings consumerSettings)
+    {
+        string[] routingKeys = ["europe.*", "*.payment", "america.*", "#"];
         var returnValue = new List<IConsumer>();
         for (var i = 0; i < numberOfConsumers; i++)
         {
@@ -182,6 +202,24 @@ public class ConsumerFactory : IConsumerFactory
 
         var result = returnValue.QueueDeclare(
             queue: !string.IsNullOrEmpty(routingKey) ? routingKey : "analytics",
+            durable: true,
+            exclusive: false,
+            autoDelete: true);
+
+        returnValue.QueueBind(
+            result.QueueName,
+            consumerSettings.ExchangeName,
+            routingKey);
+
+        return returnValue;
+    }
+
+    private static IModel CreateChannelForTopic(ConsumerSettings consumerSettings, string routingKey)
+    {
+        var returnValue = Connection.CreateModel();
+
+        var result = returnValue.QueueDeclare(
+            queue: routingKey,
             durable: true,
             exclusive: false,
             autoDelete: true);

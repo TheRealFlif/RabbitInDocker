@@ -14,7 +14,8 @@ internal class Program
         //MainForSimpleConsumer();
         //MainForSleepingConsumer();
         //MainForSubscriberConsumers();
-        MainForRoutingConsumer();
+        //MainForRoutingConsumer();
+        MainForTopicConsumer();
     }
 
     private static void MainForSimpleConsumer()
@@ -84,8 +85,26 @@ internal class Program
         while (true) ;
     }
 
+    private static void MainForTopicConsumer()
+    {
+        var factory = new ConsumerFactory(ExitMessageReceived);
+        var settings = new ConsumerSettings(1, 1000, "", "SimpleConsumer", 1)
+        {
+            ExchangeName = "Topic",
+            ConsumerType = ConsumerType.Topic
+        };
+        Console.WriteLine("Starting consumers");
+        var consumers = factory.Create(settings);
+        foreach (var consumer in consumers)
+        {
+            Console.WriteLine($"Consumer '{consumer.Name}' created and is listing to queue '{consumer.QueueName}'.");
+        }
+        while (true) ;
+    }
+
     private static void ExitMessageReceived(object? sender, EventArgs e)
     {
         Environment.Exit(0);
     }
 }
+
