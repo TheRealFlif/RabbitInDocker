@@ -71,6 +71,22 @@ public class ProducerFactory
         return returnValue;
     }
 
+    private IModel CreateChannelForDirectWithQoS(ProducerSettings producerSettings)
+    {
+        var returnValue = Connection.CreateModel();
+
+        returnValue.ExchangeDeclare(
+            producerSettings.ExchangeName,
+            ExchangeType.Direct,
+            true,
+            true);
+
+        //var queueName = returnValue.QueueDeclare(durable: true, exclusive: false, autoDelete: false).QueueName;
+        //returnValue.QueueBind(queueName, producerSettings.ExchangeName, producerSettings.RoutingKey, null);
+
+        return returnValue;
+    }
+
     private IModel CreateChannelForFanOut(ProducerSettings producerSettings)
     {
         var returnValue = _connection.CreateModel();

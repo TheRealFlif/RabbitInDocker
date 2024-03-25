@@ -18,7 +18,7 @@ public class ConsumerFactory : IConsumerFactory
 
     public IEnumerable<IConsumer> Create(ConsumerSettings consumerSettings)
     {
-        var returnValue = CreateConsumer(consumerSettings);
+        var returnValue = CreateConsumers(consumerSettings);
 
         foreach(var consumer in returnValue)
         {
@@ -33,7 +33,7 @@ public class ConsumerFactory : IConsumerFactory
         throw new NotImplementedException();
     }
 
-    private IEnumerable<IConsumer> CreateConsumer(ConsumerSettings consumerSettings)
+    private IEnumerable<IConsumer> CreateConsumers(ConsumerSettings consumerSettings)
     {
         if(ConsumerType.SimpleConsumer == consumerSettings.ConsumerType)
         {
@@ -48,13 +48,19 @@ public class ConsumerFactory : IConsumerFactory
 
         if(ConsumerType.SleepingConsumer == consumerSettings.ConsumerType)
         {
-            var returnValue = new List<IConsumer>
-            {
-                new SleepingConsumer(CreateChannelForDirect(consumerSettings), consumerSettings)
-            };
-            consumerSettings.MinWait = 5000;
-            consumerSettings.MaxWait = 15000;
-            returnValue.Add(new SleepingConsumer(CreateChannelForDirect(consumerSettings), consumerSettings));
+            var returnValue = new List<IConsumer>();
+
+            consumerSettings.MinWait = 2000;
+            consumerSettings.MaxWait = 2000;
+            returnValue.Add(new SleepingConsumer(CreateChannelForDirectWithQoS(consumerSettings, 8000), consumerSettings));
+
+            consumerSettings.MinWait = 4000;
+            consumerSettings.MaxWait = 4000;
+            returnValue.Add(new SleepingConsumer(CreateChannelForDirectWithQoS(consumerSettings, 8000), consumerSettings));
+
+            consumerSettings.MinWait = 8000;
+            consumerSettings.MaxWait = 8000;
+            returnValue.Add(new SleepingConsumer(CreateChannelForDirectWithQoS(consumerSettings, 8000), consumerSettings));
 
             return returnValue;
         }
@@ -73,6 +79,27 @@ public class ConsumerFactory : IConsumerFactory
             durable: true, 
             exclusive: false, 
             autoDelete: true);
+
+        returnValue.QueueBind(
+            result.QueueName,
+            consumerSettings.ExchangeName,
+            consumerSettings.RoutingKey);
+
+        return returnValue;
+    }
+
+    private IModel CreateChannelForDirectWithQoS(ConsumerSettings consumerSettings, int maxWaitTime)
+    {
+        var returnValue = Connection.CreateModel();
+
+        var result = returnValue.QueueDeclare(
+            queue: consumerSettings.QueueName,
+            durable: true,
+            exclusive: false,
+            autoDelete: false);
+
+        var prefetch = maxWaitTime/consumerSettings.MaxWait;
+        returnValue.BasicQos(0, (ushort)prefetch, false); //remove this line to use round robin
 
         returnValue.QueueBind(
             result.QueueName,
