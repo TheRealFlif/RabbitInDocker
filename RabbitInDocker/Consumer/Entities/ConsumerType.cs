@@ -4,6 +4,7 @@
     {
         Unknown,
         SimpleConsumer,
-        SleepingConsumer
+        SleepingConsumer,
+        Subscriber
     }
 }

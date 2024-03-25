@@ -10,8 +10,10 @@ internal class Program
 
     static void Main(string[] args)
     {
+        Thread.Sleep(4000);
         //MainForSimpleConsumer();
-        MainForSleepingConsumer();
+        //MainForSleepingConsumer();
+        MainForSubscriberConsumers();
     }
 
     private static void MainForSimpleConsumer()
@@ -37,6 +39,23 @@ internal class Program
         {
             ExchangeName = "Direct",
             ConsumerType = ConsumerType.SleepingConsumer,
+        };
+        Console.WriteLine("Starting consumers");
+        var consumers = factory.Create(settings);
+        foreach (var consumer in consumers)
+        {
+            Console.WriteLine($"Consumer '{consumer.Name}' created and is listing to queue '{consumer.QueueName}'.");
+        }
+        while (true) ;
+    }
+
+    private static void MainForSubscriberConsumers()
+    {
+        var factory = new ConsumerFactory(ExitMessageReceived);
+        var settings = new ConsumerSettings(1, 1000, string.Empty, string.Empty, 1)
+        {
+            ExchangeName = "PubSub",
+            ConsumerType = ConsumerType.Subscriber,
         };
         Console.WriteLine("Starting consumers");
         var consumers = factory.Create(settings);

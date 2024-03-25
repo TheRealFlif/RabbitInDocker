@@ -13,23 +13,32 @@ public class ProducerFactory
     public IEnumerable<IProducer> Create(ProducerSettings settings)
 
     {
-        if (settings.TypeOfExchange == ProducerType.SimpleProducer)
+        if (new[] { ProducerType.SimpleProducer, ProducerType.FanOut }.Contains(settings.TypeOfExchange))
         {
-            return new[]{
-                new SimpleProducer(CreateChannel(settings), settings),
-                new SimpleProducer(CreateChannel(settings), settings),
-                new SimpleProducer(CreateChannel(settings), settings),
-                new SimpleProducer(CreateChannel(settings), settings)
-            };
+            return CreateProducers(1, settings);
         }
 
         throw new NotImplementedException($"Cannot create a producer of type '{settings.TypeOfExchange}'");
+    }
+
+    private IEnumerable<IProducer> CreateProducers(int numberOfProducers, ProducerSettings settings)
+    {
+        var returnValue = new List<IProducer>();
+        for (int i = 0; i < numberOfProducers; i++)
+        {
+            var channel = CreateChannel(settings);
+            returnValue.Add(new SimpleProducer(channel, settings));
+        }
+        return returnValue;
     }
 
     private IModel CreateChannel(ProducerSettings producerSettings)
     {
         if (producerSettings.TypeOfExchange == ProducerType.SimpleProducer)
             return CreateChannelForDirect(producerSettings);
+
+        if (producerSettings.TypeOfExchange == ProducerType.FanOut)
+            return CreateChannelForFanOut(producerSettings);
 
         throw new NotImplementedException($"Method not implemented for '{producerSettings.TypeOfExchange}'");
     }
@@ -89,7 +98,7 @@ public class ProducerFactory
 
     private IModel CreateChannelForFanOut(ProducerSettings producerSettings)
     {
-        var returnValue = _connection.CreateModel();
+        var returnValue = Connection.CreateModel();
         returnValue.ExchangeDeclare(
             producerSettings.ExchangeName,
             ExchangeType.Fanout,

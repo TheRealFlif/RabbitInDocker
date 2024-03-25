@@ -10,9 +10,9 @@ internal class SimpleConsumer : ConsumerBase
     private static int _totalMessageCount = 0;
     private int messageCount = 0;
 
-    internal SimpleConsumer(IModel channel, ConsumerSettings consumerSettings) : base(channel)
+    internal SimpleConsumer(IModel channel, ConsumerSettings consumerSettings, string? name = null) : base(channel)
     {
-        Name = Guid.NewGuid().ToString("N");
+        Name = name ?? Guid.NewGuid().ToString("N");
     }
 
     internal override void Consumer_Received(object? sender, BasicDeliverEventArgs basicDeliverEventArgs)
