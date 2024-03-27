@@ -1,5 +1,5 @@
-RabbitInDocker
-[[_TOC_]]
+**RabbitInDocker**
+[TOC]
 
 # Setup
 1. Install Docker
